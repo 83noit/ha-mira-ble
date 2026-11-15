@@ -1,0 +1,36 @@
+{
+  "domain": "mira_ble",
+  "name": "Mira Bluetooth",
+  "bluetooth": [
+    {
+      "service_uuid": "267f0001-eb15-43f5-94c3-67d2221188f7",
+      "connectable": true
+    },
+    {
+      "local_name": "Mira*",
+      "connectable": true
+    },
+    {
+      "local_name": "MIRA*",
+      "connectable": true
+    }
+  ],
+  "codeowners": [
+    "@83noit"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "bluetooth_adapters"
+  ],
+  "documentation": "https://github.com/83noit/ha-mira-ble",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/83noit/ha-mira-ble/issues",
+  "loggers": [
+    "mira_ble"
+  ],
+  "requirements": [
+    "mira-ble==0.1.0"
+  ],
+  "version": "0.1.0"
+}

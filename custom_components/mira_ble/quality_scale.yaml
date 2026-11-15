@@ -1,0 +1,160 @@
+# Self-assessed against the Home Assistant Integration Quality Scale (54 rules, checked 2026-11-15),
+# and re-assessed after a red-team review found nine rules marked done that were not earned.
+# Nothing here has run on a real valve: "done" is about the code and its tests.
+# hassfest does not validate this file for custom integrations; it follows the core schema so
+# it can be lifted into a core PR unchanged. "done" means implemented and covered by a test or
+# a file in this repository; "exempt" quotes the rule's own exception; "todo" is not there yet.
+rules:
+  # Bronze
+  action-setup:
+    status: done
+    comment: The start action is registered in async_setup, as a platform entity service.
+  appropriate-polling:
+    status: done
+    comment: >-
+      60 s over one short connection while idle; 5 s on a held link while the valve is active,
+      kept for six polls after a failure during a run; 600 s while re-pairing is outstanding.
+  brands:
+    status: todo
+    comment: No brand/ images yet (Mira and Kohler marks are third-party trademarks).
+  common-modules: done
+  config-flow: done
+  config-flow-test-coverage: done
+  dependency-transparency:
+    status: todo
+    comment: >-
+      mira-ble is MIT and its publish workflow uses PyPI trusted publishing, but no release
+      has been published yet.
+  docs-actions:
+    status: done
+    comment: README describes mira_ble.start.
+  docs-conditions:
+    status: exempt
+    comment: This integration does not have any conditions.
+  docs-high-level-description:
+    status: done
+    comment: README (custom integration, no home-assistant.io page).
+  docs-installation-instructions:
+    status: done
+    comment: README.
+  docs-removal-instructions:
+    status: done
+    comment: README.
+  docs-triggers:
+    status: exempt
+    comment: This integration does not have any triggers.
+  entity-event-setup:
+    status: exempt
+    comment: Entities do not subscribe to events; they read coordinator data.
+  entity-unique-id: done
+  has-entity-name: done
+  runtime-data: done
+  test-before-configure:
+    status: done
+    comment: >-
+      The pairing step connects, pairs and requires a state read before creating the entry;
+      the other reads are optional, since valves differ in what they answer.
+  test-before-setup:
+    status: done
+    comment: >-
+      The first poll must succeed; otherwise setup raises ConfigEntryNotReady, or
+      ConfigEntryAuthFailed when the valve refuses the stored pairing.
+  unique-config-entry:
+    status: done
+    comment: >-
+      Unique ID is the valve's serial number (a blank one is not used); the address otherwise,
+      and the address is checked in every route.
+
+  # Silver
+  action-exceptions:
+    status: done
+    comment: >-
+      Every command raises a translated HomeAssistantError or ServiceValidationError, and the
+      message says what is known: not confirmed, stopped as a precaution, or unknown.
+  config-entry-unloading: done
+  docs-configuration-parameters:
+    status: exempt
+    comment: Integration has no options flow.
+  docs-installation-parameters:
+    status: done
+    comment: README describes the device picker and the pairing step.
+  entity-unavailable:
+    status: done
+    comment: >-
+      Readings go unavailable on the third consecutive failed poll; Stop, the numbers and the
+      preset buttons stay available on purpose, since Home Assistant skips actions aimed at
+      unavailable entities.
+  integration-owner: done
+  log-when-unavailable:
+    status: done
+    comment: The coordinator logs the first failed poll of an outage and the recovery.
+  parallel-updates: done
+  reauthentication-flow:
+    status: done
+    comment: >-
+      The bond is the authentication. Only outright refusals through the adapter that holds
+      it start the flow (three in a row, or one at setup), and the flow tries the existing
+      bond before removing anything.
+  test-coverage: done
+
+  # Gold
+  devices: done
+  diagnostics: done
+  discovery: done
+  discovery-update-info:
+    status: done
+    comment: >-
+      A known valve discovered at a new Bluetooth address is offered for pairing, and its
+      entry moves once the serial number has been read over the bonded link. An advertisement
+      alone does not move it, since the serial is broadcast in the name.
+  docs-data-update:
+    status: done
+    comment: README.
+  docs-examples:
+    status: done
+    comment: README (attended-start, auto-stop, time-limit and notification examples; no blueprint).
+  docs-known-limitations:
+    status: done
+    comment: README.
+  docs-supported-devices:
+    status: done
+    comment: README, including what has and has not been run on real hardware.
+  docs-supported-functions:
+    status: done
+    comment: README.
+  docs-troubleshooting:
+    status: done
+    comment: README.
+  docs-use-cases:
+    status: done
+    comment: README.
+  dynamic-devices:
+    status: exempt
+    comment: Only one device per config entry. New devices are set up as new entries.
+  entity-category: done
+  entity-device-class: done
+  entity-disabled-by-default: done
+  entity-translations: done
+  exception-translations: done
+  icon-translations: done
+  reconfiguration-flow:
+    status: done
+    comment: Reconfigure pairs again on demand and re-reads the outlets and presets.
+  repair-issues:
+    status: done
+    comment: >-
+      Two issues, each for something the user can act on: a valve heard but unanswered for an
+      hour (close the app, restart the proxy), and a proxy that forgets its pairing. A lost
+      bond goes through the reauthentication flow.
+  stale-devices:
+    status: exempt
+    comment: Stale devices are removed with the config entry as there is only one device per entry.
+
+  # Platinum
+  async-dependency: done
+  inject-websession:
+    status: exempt
+    comment: Device doesn't make HTTP requests; communication is over Bluetooth.
+  strict-typing:
+    status: done
+    comment: mypy --strict on the integration; mira-ble ships py.typed and is strictly typed.

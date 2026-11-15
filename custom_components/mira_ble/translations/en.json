@@ -1,0 +1,195 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "Choose the shower valve to set up.",
+        "data": {
+          "address": "Valve"
+        },
+        "data_description": {
+          "address": "Mira valves in Bluetooth range that are not set up yet."
+        }
+      },
+      "bluetooth_confirm": {
+        "title": "Pair with {name}",
+        "description": "{moved}The valve only talks to devices it is paired with, and only accepts a new pairing while it is in pairing mode.\n\n1. Close the Mira app on every phone nearby: the valve accepts one connection at a time.\n2. Put the valve in pairing mode. On a controller with a button, press and hold it for five seconds until it flashes; on a dial controller use Menu > Settings > Connect. Your manual has the steps for your model. Switching the valve's power off and on also leaves it pairable for a short while.\n3. Select **Submit** within about 30 seconds.\n\nIf the adapter or proxy below is already paired with the valve, select **Submit** straight away.\n\nThe pairing is stored on the adapter or proxy that makes it, so use the one that will stay nearest the valve, and keep only that one able to connect there.\n\nIn range and able to connect: {connectable}"
+      },
+      "pair_failed": {
+        "title": "Pairing with {name} failed",
+        "description": "Put the valve in pairing mode again, then select **Submit** to retry."
+      },
+      "reauth_confirm": {
+        "title": "Pair with {name} again",
+        "description": "The valve refused the stored pairing. The existing pairing is tried once more first, so nothing is lost if it still works.\n\nPut the valve in pairing mode (see your manual), then select **Submit** within about 30 seconds.\n\nIn range and able to connect: {connectable}"
+      },
+      "reconfigure": {
+        "title": "Pair with {name} again",
+        "description": "Use this after moving or replacing the Bluetooth adapter or proxy nearest the valve (the pairing is stored on the adapter that made it), or after changing presets in the Mira app.\n\nThe existing pairing is tried first. If the valve refuses it, the valve must be in pairing mode (see your manual): select **Submit** within about 30 seconds of putting it there.\n\nIn range and able to connect: {connectable}"
+      }
+    },
+    "progress": {
+      "pair": "Connecting to {name}, pairing and reading its outlets and presets. This can take a couple of minutes on a slow link."
+    },
+    "error": {
+      "no_connectable_adapter": "No Bluetooth adapter or proxy that can make connections is hearing the valve. An ESPHome proxy needs `active: true`.",
+      "not_in_pairing_mode": "The valve refused to pair (through {source}). It was probably not in pairing mode, or the pairing window had closed.",
+      "cannot_connect": "Could not connect to the valve through {source}: {reason}. Check that the Mira app is closed and the valve is powered.",
+      "no_longer_in_range": "The valve is not being heard by any Bluetooth adapter or proxy. Check that it is powered.",
+      "unknown": "Unexpected error. The Home Assistant log has the details.",
+      "not_encrypted": "The link to the valve came up but could not be encrypted (through {source}). The proxy may need a restart, or it holds no pairing with the valve: put the valve in pairing mode and try again."
+    },
+    "abort": {
+      "already_configured": "This valve is already set up.",
+      "already_in_progress": "Setup of this valve is already in progress.",
+      "no_devices_found": "No Mira valve that is not yet set up was found in Bluetooth range.",
+      "not_supported": "This device is not a supported Mira valve.",
+      "reauth_successful": "The valve is paired again.",
+      "reconfigure_successful": "The valve is paired and its outlets and presets were re-read.",
+      "wrong_device": "The valve that answered is not the one this entry was set up for.",
+      "moved": "The valve was already set up; its entry now points at its new Bluetooth address and pairing."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "running": {
+        "name": "Running"
+      },
+      "fault": {
+        "name": "Fault"
+      }
+    },
+    "button": {
+      "stop": {
+        "name": "Stop"
+      },
+      "preset": {
+        "name": "Start {name}"
+      },
+      "preset_slot": {
+        "name": "Start preset {slot}"
+      }
+    },
+    "number": {
+      "target_temperature": {
+        "name": "Target temperature"
+      },
+      "target_flow": {
+        "name": "Target flow"
+      }
+    },
+    "sensor": {
+      "water_temperature": {
+        "name": "Water temperature"
+      },
+      "flow": {
+        "name": "Flow"
+      },
+      "last_run_duration": {
+        "name": "Last run duration"
+      },
+      "last_run_volume": {
+        "name": "Last run volume"
+      },
+      "last_run_temperature": {
+        "name": "Last run temperature"
+      },
+      "error_code": {
+        "name": "Error code"
+      },
+      "water_total": {
+        "name": "Water used"
+      },
+      "outlet_max_temperature": {
+        "name": "Outlet {number} maximum temperature"
+      },
+      "outlet_max_duration": {
+        "name": "Outlet {number} maximum run time"
+      }
+    },
+    "switch": {
+      "outlet": {
+        "name": "Outlet {number}"
+      },
+      "hand_shower": {
+        "name": "Hand shower"
+      },
+      "overhead": {
+        "name": "Overhead shower"
+      },
+      "bath_filler": {
+        "name": "Bath filler"
+      }
+    }
+  },
+  "exceptions": {
+    "not_reachable": {
+      "message": "No Bluetooth adapter or proxy can currently connect to {name}."
+    },
+    "pairing_in_progress": {
+      "message": "{name} is being paired; try again when that has finished."
+    },
+    "pairing_required": {
+      "message": "{name} refused the stored pairing."
+    },
+    "not_encrypted": {
+      "message": "The link to {name} could not be encrypted."
+    },
+    "poll_failed": {
+      "message": "Could not read {name}: {error}"
+    },
+    "unsafe_value": {
+      "message": "Refused before sending: {error}"
+    },
+    "temperature_above_outlet": {
+      "message": "{temperature} °C is above this outlet's maximum of {limit} °C."
+    },
+    "flow_outside_outlet": {
+      "message": "A flow of {flow} L/min is outside this outlet's range."
+    },
+    "preset_changed": {
+      "message": "Preset {slot} is no longer \"{name}\" in the valve, or could not be read. Nothing was started. Use Reconfigure to re-read the presets."
+    },
+    "preset_too_hot": {
+      "message": "Preset \"{name}\" is set to {temperature} °C, above its outlet's maximum of {limit} °C. Nothing was started."
+    },
+    "not_confirmed": {
+      "message": "{name} acknowledged the command but its state did not follow: {error}. The entities show what the valve last reported."
+    },
+    "command_failed": {
+      "message": "The command to {name} failed: {error}. The entities show what the valve last reported."
+    },
+    "start_stopped": {
+      "message": "The start on {name} could not be confirmed ({error}), so the valve was stopped as a precaution."
+    },
+    "start_unknown": {
+      "message": "The start on {name} could not be confirmed ({error}) and neither could a stop. CHECK THE SHOWER: water may be running."
+    }
+  },
+  "issues": {
+    "not_responding": {
+      "title": "{name} has not answered for an hour",
+      "description": "Home Assistant can hear {name} but has not been able to read it for at least an hour. Pairing it again is rarely the fix. In this order:\n\n1. Close the Mira app on every phone nearby: the valve accepts one connection at a time.\n2. Restart the Bluetooth proxy nearest the valve. A proxy can keep accepting connections while its pairing store is stuck.\n3. Check that only one proxy able to connect is in range of the valve; the pairing lives on the one that made it.\n4. Only if none of that helps, use **Reconfigure** on the integration, with the valve in pairing mode.\n\nThis notice clears itself when the valve answers again."
+    },
+    "proxy_forgets_bond": {
+      "title": "The Bluetooth proxy near {name} is losing its pairing",
+      "description": "{name} was paired successfully less than an hour ago and is now refusing the pairing. That is the signature of a Bluetooth proxy that forgets pairings after one connection: ESPHome 2026.10 builds on ESP-IDF 5.5.6, which has this fault (esphome/esphome#21880).\n\nPairing again will not help: it works once and fails again. Either pin the proxy's framework to ESP-IDF 5.5.5 (`esp32: framework: type: esp-idf, version: 5.5.5`), update it to a release that carries the fix, or use a different adapter. Restarting the proxy gives one more working connection.\n\nThis notice clears itself when the valve answers again."
+    }
+  },
+  "services": {
+    "start": {
+      "name": "Start outlet",
+      "description": "Opens this outlet at a temperature and flow given for this start only. Other outlets are left as they are. The values are checked against the outlet's own limits and are not remembered.",
+      "fields": {
+        "temperature": {
+          "name": "Temperature",
+          "description": "Target temperature in °C. Defaults to the Target temperature entity."
+        },
+        "flow": {
+          "name": "Flow",
+          "description": "Flow in litres per minute. Defaults to the Target flow entity."
+        }
+      }
+    }
+  }
+}

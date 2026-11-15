@@ -1,0 +1,24 @@
+start:
+  target:
+    entity:
+      integration: mira_ble
+      domain: switch
+  fields:
+    temperature:
+      required: false
+      example: 38
+      selector:
+        number:
+          min: 15
+          max: 48
+          step: 0.5
+          unit_of_measurement: "°C"
+    flow:
+      required: false
+      example: 10
+      selector:
+        number:
+          min: 1
+          max: 25
+          step: 0.5
+          unit_of_measurement: "L/min"
