@@ -34,9 +34,9 @@ BINARY_SENSORS: tuple[MiraBinarySensorDescription, ...] = (
         key="running",
         translation_key="running",
         device_class=BinarySensorDeviceClass.RUNNING,
-        # Anything short of fully at rest: an open outlet, or a run the valve is holding
-        # (which is how a preset shows on some models).
-        value_fn=lambda state: state.active,
+        # Water is running: an open outlet or measured flow. A valve that is only holding
+        # (paused after a warm-up or a stop) is not running.
+        value_fn=lambda state: state.running,
     ),
     MiraBinarySensorDescription(
         key="fault",

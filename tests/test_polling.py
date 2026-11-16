@@ -100,11 +100,27 @@ async def test_a_run_started_at_the_wall_is_followed_without_changing_the_stored
     assert hass.states.get("number.bathroom_target_flow").state == "12.0"
 
 
-async def test_a_preset_running_on_a_platinum_is_followed_as_running(
+async def test_a_held_valve_with_the_water_off_is_watched_but_not_running(
     hass: HomeAssistant, setup_entry: MockConfigEntry, valve: FakeValve
 ) -> None:
-    """Started at the wall: held bit and run flag, no outlet bit."""
-    valve.held = valve.run_flag = True
+    """Measured on a Platinum: warm-up done or just stopped, held for two minutes."""
+    valve.held = True
+    valve.volume = 4
+    await _tick(hass, IDLE_INTERVAL + 1)
+    assert hass.states.get(RUNNING).state == "off"
+    assert hass.states.get("sensor.bathroom_flow").state == "0.0"
+    assert valve.is_connected  # the outlet button at the wall can start it at any moment
+    assert _interval(setup_entry) == RUNNING_INTERVAL
+    valve.rest()
+    await _tick(hass, RUNNING_INTERVAL + 1)
+    assert _interval(setup_entry) == IDLE_INTERVAL
+
+
+async def test_water_flowing_with_no_outlet_bit_is_followed_as_running(
+    hass: HomeAssistant, setup_entry: MockConfigEntry, valve: FakeValve
+) -> None:
+    """Started at the wall: held bit and measured flow, no outlet bit."""
+    valve.held = valve.flowing = True
     valve.target_tenths, valve.flow_byte = 380, 48
     await _tick(hass, IDLE_INTERVAL + 1)
     assert hass.states.get(RUNNING).state == "on"

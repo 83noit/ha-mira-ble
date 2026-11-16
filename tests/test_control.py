@@ -250,15 +250,22 @@ async def test_the_start_action_refuses_values_the_outlet_does_not_allow_before_
 # --- stopping ---------------------------------------------------------------------------------
 
 
-async def test_closing_the_last_outlet_stops_and_releases_the_link(
+async def test_closing_the_last_outlet_pauses_and_releases_the_link_once_at_rest(
     hass: HomeAssistant, setup_entry: MockConfigEntry, valve: FakeValve
 ) -> None:
+    """The stop is the app's pause: water off, the valve's settings kept, held for a while."""
     await _call(hass, "switch", "turn_on", HAND)
+    started = _commands(valve)[-1]
     await _call(hass, "switch", "turn_off", HAND)
     assert valve.outlets == 0
-    assert _commands(valve)[-1] == STOP_FRAME
-    assert not valve.is_connected
+    assert not valve.running
+    assert _commands(valve)[-1] == started[:8] + b"\x40" + _commands(valve)[-1][9:]
     assert hass.states.get(RUNNING).state == "off"
+    assert valve.is_connected  # held: the wall button can start it again at any moment
+    valve.rest()
+    await setup_entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+    assert not valve.is_connected
 
 
 async def test_stop_button(
@@ -302,12 +309,26 @@ async def test_stop_is_retried_on_a_fresh_connection(
     assert valve.connects == connects  # the link was still up for the retry
 
 
-async def test_a_platinum_preset_shows_as_running_and_can_be_stopped(
+async def test_stopping_a_valve_that_stays_held_is_a_confirmed_stop(
     hass: HomeAssistant, setup_entry: MockConfigEntry, valve: FakeValve
 ) -> None:
-    """Measured on a Platinum: a running preset has the held bit and no outlet bit, and
-    only "run preset 0" stopped it."""
-    valve.platinum = valve.zero_stop_ignored = True
+    """Measured on a Platinum: after a stop the held bit stays for two minutes."""
+    await _call(hass, "switch", "turn_on", HAND)
+    await _call(hass, "button", "press", STOP)  # raises if the stop is not confirmed
+    assert valve.held
+    assert not valve.running
+    assert hass.states.get(RUNNING).state == "off"
+    assert hass.states.get(HAND).state == "off"
+    assert _commands(valve)[-1][8] == 0x40  # the pause, and no second stop
+    assert STOP_FRAME not in _commands(valve)
+
+
+async def test_a_preset_with_no_outlet_bit_shows_as_running_and_can_be_stopped(
+    hass: HomeAssistant, setup_entry: MockConfigEntry, valve: FakeValve
+) -> None:
+    """A running preset reported with the held bit, measured flow and no outlet bit, where
+    only "run preset 0" stops it."""
+    valve.hidden_outlet = valve.zero_stop_ignored = valve.pause_ignored = True
     await _call(hass, "button", "press", "button.bathroom_start_default")
     assert valve.active
     assert hass.states.get(RUNNING).state == "on"
@@ -324,10 +345,10 @@ async def test_a_platinum_preset_shows_as_running_and_can_be_stopped(
 async def test_turning_off_a_switch_during_a_held_run_stops_the_valve(
     hass: HomeAssistant, setup_entry: MockConfigEntry, valve: FakeValve
 ) -> None:
-    valve.platinum = True
+    valve.hidden_outlet = True
     await _call(hass, "button", "press", "button.bathroom_start_default")
     await _call(hass, "switch", "turn_off", HAND)
-    assert not valve.active
+    assert not valve.running
 
 
 # --- presets ----------------------------------------------------------------------------------
@@ -387,7 +408,9 @@ async def test_a_start_that_cannot_be_confirmed_is_stopped_and_says_so(
     valve.lag = 1000  # the start never shows in the state within the window
     with pytest.raises(HomeAssistantError, match="stopped as a precaution"):
         await _call(hass, "switch", "turn_on", HAND)
-    assert STOP_FRAME in _commands(valve)
+    stops = _commands(valve)[1:]
+    assert stops  # a stop followed the start
+    assert all(frame[8] & 0x07 == 0 for frame in stops)  # and none of them opens an outlet
 
 
 async def test_a_start_whose_stop_cannot_be_confirmed_tells_the_user_to_check(

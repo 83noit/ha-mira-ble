@@ -10,10 +10,9 @@ Built on [mira-ble](https://github.com/83noit/mira-ble), whose
 [acknowledgements](https://github.com/83noit/mira-ble#acknowledgements) credit the projects it
 draws on.
 
-> **Status: alpha, and not yet run on a real valve.** The protocol layer is tested against
-> replies recorded from real valves by other projects, and the integration against a simulated
-> valve built from those recordings and from reported behaviour. Nothing in this repository
-> has been connected to hardware. See [What has been verified](#what-has-been-verified).
+> **Status: alpha, and not yet run on a real valve.** The library underneath has paired with
+> and read one Mira Platinum; this integration has only run against a simulated valve built
+> from recordings and from reported behaviour. No control command has reached hardware. See [What has been verified](#what-has-been-verified).
 
 > **This drives real plumbing that produces hot water.** Home Assistant is not a safety
 > system. Read [Safety](#safety) before writing an automation that starts water.
@@ -83,7 +82,7 @@ running it by mistake does no harm.
 | Target temperature, Target flow | Number | What the next start **from Home Assistant** uses. Kept across restarts; never taken from the valve, so a start does not inherit what the last person used at the wall. While water runs under an outlet they show the valve's own values, and changing one applies at once. |
 | Stop | Button | Closes every outlet, including a running preset. Always available, retried up to three times. |
 | Start *preset name*, one per preset stored in the valve | Button | Checks the preset first (see Safety), then starts it. |
-| Running | Binary sensor | On unless the valve reports itself fully at rest. A preset on some models shows no open outlet but is still running; this sensor covers it. |
+| Running | Binary sensor | On while water runs: an outlet is open or flow is measured. A valve that is only holding (a Platinum pauses for two minutes after a warm-up or a stop) is off. |
 | Fault | Binary sensor (diagnostic) | On when the valve reports an error. |
 | Water temperature, Flow | Sensor | Measured at the valve. |
 | Last run duration, volume, temperature | Sensor | The valve's own record of its last finished run. |
@@ -95,7 +94,7 @@ running it by mistake does no harm.
 opens that outlet at values given for this start only. They are checked against the outlet's
 own limits before anything is sent, and are not remembered.
 
-If the valve does not answer when asked for its presets (a Platinum at rest was seen not to),
+If the valve does not answer when asked for its presets (one Platinum at rest was seen not to; another answered),
 the integration cannot list or check them. It then creates *Start preset 1* to *3*, disabled;
 enable the ones your valve has. They run the slot unchecked.
 
@@ -252,10 +251,12 @@ slow valve shows up as a reconnect, not a wrong reading.
 | | Status |
 | --- | --- |
 | Frame format, checksum, state layout, outlet command, the all-zero stop, presets, outlet limits | Tested against replies and frames recorded from real Activate and Mode valves by [mira-mode-control](https://github.com/ryan-shaw/mira-mode-control), [ha-mira-mode](https://github.com/HaydenGriffin/ha-mira-mode) and [Mira-Activate-HA](https://github.com/jonwilliams84/Mira-Activate-HA) |
-| A Platinum's "running preset" state and its "run preset 0" stop | From measurements on one Platinum, built into the simulation |
+| A Platinum's state through warm-up, hold, shower and stop | Measured on one Platinum with the library and built into the tests |
+| "Run preset 0" as a stop | Measured on an earlier Platinum, before this library existed |
+| The library on a Mira Platinum: pairing, reads, preset start, outlet command, pause and all-zero stop | Run by hand from macOS on one unit |
 | Outlet count, outlet type, error code | Read from the vendor app's code only |
 | This integration, on any real valve | **Not yet run** |
-| Starting outlets directly on a Mira Platinum | **Not yet run by anyone known to this project.** The vendor app controls the Platinum through the cloud and uses Bluetooth only for commissioning |
+| Starting outlets directly on a Mira Platinum | Works on one unit, through the library. The vendor app does not do this: it controls the Platinum through the cloud |
 | Local BlueZ adapter | **Not yet run** (the pairing code is shared with an integration that is) |
 
 ## Known limitations

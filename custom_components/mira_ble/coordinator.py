@@ -676,7 +676,7 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
             if on and wanted == current.outlets and temperature is None and flow is None:
                 return current
             if not wanted:
-                if not current.active:
+                if not current.running:
                     return current
                 attempt.written = True
                 return await self._async_stop_on(valve)
@@ -741,7 +741,7 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
             if flow is None and send_flow <= 0:
                 send_flow = self.clamp_flow(self.flow_setpoint, wanted)
         else:
-            attempt.from_rest = not current.active
+            attempt.from_rest = not current.running
             limit = self.temperature_limit(wanted)
             target = min(self.temperature_setpoint if temperature is None else temperature, limit)
             send_flow = self.clamp_flow(self.flow_setpoint if flow is None else flow, wanted)
@@ -781,7 +781,7 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
         async def action(valve: MiraValve, current: State, attempt: _Attempt) -> State:
             if self.presets_verifiable:
                 await self._async_verify_preset(valve, slot)
-            attempt.from_rest = not current.active
+            attempt.from_rest = not current.running
             attempt.written = True
             state = await valve.run_preset(slot, before=current)
             assert state is not None
