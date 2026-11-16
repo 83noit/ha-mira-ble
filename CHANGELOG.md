@@ -22,6 +22,8 @@ run against a real valve.
 - `mira_ble.run_preset` action: start a preset and carry it past its warm-up, for valves
   that warm a preset up and then wait (measured on a Mira Platinum). A press of a preset
   button sends the preset command once, as the wall controller's start button does.
+- "Enable debug logging" also covers the Bluetooth link (`ble_bond`); per-frame lines are on
+  `ble_bond.frames`, which stays at INFO unless set to debug.
 - One short connection per poll and per command, never a held link: through an ESPHome proxy
   a link held for more than a few seconds was measured to answer in 7 to 10 s.
 - Commands confirmed by reading the valve back; temperatures capped at each outlet's own

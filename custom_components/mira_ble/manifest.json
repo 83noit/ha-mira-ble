@@ -27,10 +27,12 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/83noit/ha-mira-ble/issues",
   "loggers": [
-    "mira_ble"
+    "mira_ble",
+    "ble_bond"
   ],
   "requirements": [
-    "mira-ble==0.1.0"
+    "mira-ble==0.1.0",
+    "ble-bond==1.1.0"
   ],
   "version": "0.1.0"
 }
