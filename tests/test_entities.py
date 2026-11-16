@@ -156,3 +156,15 @@ async def test_diagnostics_hide_names_people_chose_and_show_what_debugging_needs
     assert diagnostics["setpoints"] == {"temperature": 38.0, "flow": 12.0}
     assert diagnostics["outlets"][1]["max_duration"] == 1800
     assert diagnostics["polling"]["optional_reads_backing_off"] == {}
+
+
+async def test_target_flow_moves_in_whole_litres(
+    hass: HomeAssistant, setup_entry: MockConfigEntry
+) -> None:
+    """Half-litre steps made the slider show "12.0 L/min", too wide for its value box."""
+    state = hass.states.get("number.bathroom_target_flow")
+    assert state is not None
+    assert state.attributes["step"] == 1
+    temperature = hass.states.get("number.bathroom_target_temperature")
+    assert temperature is not None
+    assert temperature.attributes["step"] == 0.5

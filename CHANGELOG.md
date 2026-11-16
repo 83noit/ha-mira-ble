@@ -7,6 +7,15 @@ release may change entities or behaviour.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-16
+
+### Changed
+
+- *Target flow* moves in whole litres per minute, like the Mira app's own flow scale. With
+  half-litre steps the slider showed "12.0 L/min", which spilled out of Home Assistant's value
+  box. The `mira_ble.start` action's flow field steps the same way; it still accepts any value
+  within the outlet's limits.
+
 ## [0.1.1] - 2026-11-16
 
 ### Changed

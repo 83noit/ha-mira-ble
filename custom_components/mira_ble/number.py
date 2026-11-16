@@ -59,7 +59,9 @@ NUMBERS: tuple[MiraNumberDescription, ...] = (
         translation_key="target_flow",
         device_class=NumberDeviceClass.VOLUME_FLOW_RATE,
         native_unit_of_measurement=UnitOfVolumeFlowRate.LITERS_PER_MINUTE,
-        native_step=0.5,
+        # Whole litres, as the Mira app's own flow scale; a half step also made the slider's
+        # value ("12.0 L/min") too wide for Home Assistant's value box.
+        native_step=1,
         mode=NumberMode.SLIDER,
         value_fn=lambda coordinator: coordinator.target_flow,
         min_fn=lambda coordinator: coordinator.min_flow,
