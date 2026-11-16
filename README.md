@@ -10,9 +10,10 @@ Built on [mira-ble](https://github.com/83noit/mira-ble), whose
 [acknowledgements](https://github.com/83noit/mira-ble#acknowledgements) credit the projects it
 draws on.
 
-> **Status: alpha, and not yet run on a real valve.** The library underneath has paired with
-> and read one Mira Platinum; this integration has only run against a simulated valve built
-> from recordings and from reported behaviour. No control command has reached hardware. See [What has been verified](#what-has-been-verified).
+> **Status: beta, run on one real valve.** It has run in one Home Assistant against one Mira
+> Platinum, through an ESPHome Bluetooth proxy: pairing, polling, presets, outlets and stop.
+> Everything else (other models, a local Bluetooth adapter) has only run against a simulated
+> valve. See [What has been verified](#what-has-been-verified).
 
 > **This drives real plumbing that produces hot water.** Home Assistant is not a safety
 > system. Read [Safety](#safety) before writing an automation that starts water.
@@ -287,9 +288,10 @@ slow valve shows up as a reconnect, not a wrong reading.
 | "Run preset 0" as a stop | Measured on an earlier Platinum, before this library existed |
 | The library on a Mira Platinum: pairing, reads, preset start, outlet command, pause and all-zero stop | Run by hand from macOS on one unit |
 | Outlet count, outlet type, error code | Read from the vendor app's code only |
-| This integration, on any real valve | **Not yet run** |
+| This integration on a Mira Platinum through an ESPHome proxy (AtomS3, ESPHome 2026.9.1, ESP-IDF 5.5.5) | Run in one Home Assistant: pairing, the bond surviving proxy and Home Assistant restarts, idle polling, presets in both steps, outlet on and off, stop. Stop is acknowledged in about 2.4 s. A whole shower followed at the 5-second polling rate has not been watched yet |
 | Starting outlets directly on a Mira Platinum | Works on one unit, through the library. The vendor app does not do this: it controls the Platinum through the cloud |
 | Local BlueZ adapter | **Not yet run** (the pairing code is shared with an integration that is) |
+| Activate and Mode valves | **Not yet run** with this integration; the protocol layer is tested against their recordings |
 
 ## Known limitations
 

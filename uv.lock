@@ -1221,6 +1221,7 @@ source = { virtual = "." }
 [package.dev-dependencies]
 dev = [
     { name = "aiousbwatcher" },
+    { name = "ble-bond" },
     { name = "bluetooth-adapters" },
     { name = "bluetooth-auto-recovery" },
     { name = "bluetooth-data-tools" },
@@ -1239,12 +1240,13 @@ dev = [
 [package.metadata.requires-dev]
 dev = [
     { name = "aiousbwatcher" },
+    { name = "ble-bond", specifier = "==1.1.0" },
     { name = "bluetooth-adapters" },
     { name = "bluetooth-auto-recovery" },
     { name = "bluetooth-data-tools" },
     { name = "dbus-fast" },
     { name = "habluetooth" },
-    { name = "mira-ble", editable = "../mira-ble" },
+    { name = "mira-ble", specifier = "==0.1.0" },
     { name = "mypy", specifier = ">=1.19" },
     { name = "pytest-cov", specifier = ">=7" },
     { name = "pytest-homeassistant", extras = ["bluetooth"], specifier = ">=2026.11.1" },
@@ -1733,25 +1735,15 @@ wheels = [
 
 [[package]]
 name = "mira-ble"
-source = { editable = "../mira-ble" }
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ble-bond" },
     { name = "bleak" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "ble-bond", specifier = ">=1.1,<2" },
-    { name = "bleak", specifier = ">=3.0.2" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mypy", specifier = ">=1.19" },
-    { name = "pytest", specifier = ">=9" },
-    { name = "pytest-asyncio", specifier = ">=1.5" },
-    { name = "pytest-cov", specifier = ">=7" },
-    { name = "ruff", specifier = ">=0.14" },
+sdist = { url = "https://files.pythonhosted.org/packages/a8/a0/a9662b1ddad25ba555e584a2b7f0183a4f47d248b101abc86547c66a27bc/mira_ble-0.1.0.tar.gz", hash = "sha256:ae7f0d57d0324d810f62e8972a73104c50bd321753a322f9a5585e086a99ceb4", size = 65643, upload-time = "2026-11-16T11:48:18.603Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e4/10/c03afe5b6e3e9a0daaf9d23170c6dee0324d952190dca31f7515a793eed2/mira_ble-0.1.0-py3-none-any.whl", hash = "sha256:d053cc4616de4084f3eff2ba3edf54c431c1aae68f6be34a77691ad4b24c1a38", size = 45907, upload-time = "2026-11-16T11:48:17.271Z" },
 ]
 
 [[package]]

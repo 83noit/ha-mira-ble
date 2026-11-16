@@ -10,7 +10,9 @@ dependencies = []
 [dependency-groups]
 dev = [
     "pytest-homeassistant[bluetooth]>=2026.11.1",
-    "mira-ble",
+    # The versions the manifest pins.
+    "mira-ble==0.1.0",
+    "ble-bond==1.1.0",
     "pytest-cov>=7",
     # Requirements of the core bluetooth/usb components the tests load
     "aiousbwatcher", "serialx", "bluetooth-adapters", "bluetooth-auto-recovery",
@@ -73,7 +75,3 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 fail_under = 95
-
-# Until mira-ble is on PyPI the tests run against the library in the parent directory.
-[tool.uv.sources]
-mira-ble = { path = "../mira-ble", editable = true }

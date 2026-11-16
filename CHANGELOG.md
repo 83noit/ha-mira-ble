@@ -7,8 +7,10 @@ release may change entities or behaviour.
 
 ## [Unreleased]
 
-The library underneath has run by hand on one Mira Platinum; this integration has not yet
-run against a real valve.
+## [0.1.0b1] - 2026-11-16
+
+First beta. Run in one Home Assistant against one Mira Platinum through an ESPHome proxy;
+not yet run with a local Bluetooth adapter or with an Activate or Mode valve.
 
 ### Added
 

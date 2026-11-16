@@ -21,13 +21,13 @@ rules:
   config-flow: done
   config-flow-test-coverage: done
   dependency-transparency:
-    status: todo
+    status: done
     comment: >-
-      mira-ble is MIT and its publish workflow uses PyPI trusted publishing, but no release
-      has been published yet.
+      mira-ble and ble-bond are MIT, developed in public repositories, and published to PyPI
+      from tagged commits by a CI workflow using trusted publishing.
   docs-actions:
     status: done
-    comment: README describes mira_ble.start.
+    comment: README describes mira_ble.start and mira_ble.run_preset.
   docs-conditions:
     status: exempt
     comment: This integration does not have any conditions.
