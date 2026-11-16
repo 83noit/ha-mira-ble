@@ -33,7 +33,7 @@
     },
     "error": {
       "no_connectable_adapter": "No Bluetooth adapter or proxy that can make connections is hearing the valve. An ESPHome proxy needs `active: true`.",
-      "not_in_pairing_mode": "The valve refused to pair (through {source}). It was probably not in pairing mode, or the pairing window had closed.",
+      "not_in_pairing_mode": "The valve refused to pair (through {source}). It was probably not in pairing mode, or the pairing window had closed. If it is in pairing mode and this keeps happening through an ESPHome proxy, the proxy may still hold an old key from before the valve was reset: see Known issues in the documentation.",
       "cannot_connect": "Could not connect to the valve through {source}: {reason}. Check that the Mira app is closed and the valve is powered.",
       "no_longer_in_range": "The valve is not being heard by any Bluetooth adapter or proxy. Check that it is powered.",
       "unknown": "Unexpected error. The Home Assistant log has the details.",
@@ -194,8 +194,8 @@
       "description": "Home Assistant can hear {name} but has not been able to read it for at least an hour. Pairing it again is rarely the fix. In this order:\n\n1. Close the Mira app on phones nearby (some valves accept only one connection at a time).\n2. Restart the Bluetooth proxy nearest the valve. A proxy can keep accepting connections while its pairing store is stuck.\n3. Check that only one proxy able to connect is in range of the valve; the pairing lives on the one that made it.\n4. Only if none of that helps, use **Reconfigure** on the integration, with the valve in pairing mode.\n\nThis notice clears itself when the valve answers again."
     },
     "proxy_forgets_bond": {
-      "title": "The Bluetooth proxy near {name} is losing its pairing",
-      "description": "{name} was paired successfully less than an hour ago and is now refusing the pairing. That is the signature of a Bluetooth proxy that forgets pairings after one connection: ESPHome 2026.10 builds on ESP-IDF 5.5.6, which has this fault (esphome/esphome#21880).\n\nPairing again will not help: it works once and fails again. Either pin the proxy's framework to ESP-IDF 5.5.5 (`esp32: framework: type: esp-idf, version: 5.5.5`), update it to a release that carries the fix, or use a different adapter. Restarting the proxy gives one more working connection.\n\nThis notice clears itself when the valve answers again."
+      "title": "The Bluetooth proxy near {name} lost its pairing soon after pairing",
+      "description": "{name} was paired successfully less than an hour ago and is now refusing the pairing through the proxy that holds it. Two causes are known:\n\n- **ESPHome 2026.10** forgets pairings after one connection (esphome/esphome#21880). Update the proxy to ESPHome 2026.11 or later.\n- On default firmware, **a connection that dropped** while the pairing was in use made the proxy erase it. The setting `CONFIG_BT_BLE_SMP_REMOVE_BOND_ON_PAIR_FAIL_AS_CENTRAL: \"n\"` prevents that (see Known issues in the documentation).\n\nIn both cases, put the valve in pairing mode and use **Reconfigure** to pair again.\n\nThis notice clears itself when the valve answers again."
     }
   },
   "services": {

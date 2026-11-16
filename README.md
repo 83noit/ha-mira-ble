@@ -52,9 +52,22 @@ frames, which is what is needed to confirm or correct the layouts for your valve
   used. The pairing lives on the adapter that made it, and Home Assistant chooses the adapter
   for each connection by signal, so if two can connect near the valve only one of them will
   work: make the others scan-only.
-- **On an ESPHome proxy, mind the firmware and the signal.** A proxy can lose the pairing
-  without the valve being at fault; see [Known issues](#known-issues) before you choose
-  where to put it and which ESPHome version to run.
+- **On an ESPHome proxy, the recommended setup** (why: [Known issues](#known-issues)):
+  - **ESPHome 2026.11 or later.** ESPHome 2026.10 forgets pairings after one connection.
+  - **The proxy close to the valve.** Every dropped link is a small chance of losing the
+    pairing on default firmware.
+  - **This setting, so that a dropped link does not erase the pairing:**
+
+    ```yaml
+    esp32:
+      framework:
+        type: esp-idf
+        sdkconfig_options:
+          CONFIG_BT_BLE_SMP_REMOVE_BOND_ON_PAIR_FAIL_AS_CENTRAL: "n"
+    ```
+
+    It has a cost after a valve reset; [Known issues](#known-issues) explains it and a
+    second, optional setting that removes it.
 
 ## Install
 
@@ -315,50 +328,64 @@ slow valve shows up as a reconnect, not a wrong reading.
 
 ## Known issues
 
-### An ESPHome proxy can lose the pairing
+The valve only talks over an encrypted link, using a pairing that both sides keep. Home
+Assistant connects once a minute, and every few seconds while water runs (see
+[How data is updated](#how-data-is-updated) for why it does not keep one connection open).
+Each connection uses the stored pairing again. Through an ESPHome proxy, two things can go
+wrong with it.
 
-Seen once, during a real shower, on an ESPHome proxy (ESP32-S3, ESP-IDF 5.5.5) that heard the
-valve at -76 dBm: one connection dropped while it was being encrypted, and from then on the
-valve refused every connection until it was paired again in pairing mode. Restarting the
-proxy did not help.
+### Home Assistant asks you to pair the valve again
 
-The cause is in the proxy's Bluetooth stack, not in the valve or this integration. ESP-IDF
-erases a stored pairing from flash whenever an encryption attempt fails, and a link that
-drops at that moment counts as a failure. Every connection is a small chance of it, and this
-integration connects once a minute when idle and every few seconds while water runs (see
-[How data is updated](#how-data-is-updated) for why it does not hold the connection).
+**Cause.** On its default firmware an ESPHome proxy erases a stored pairing whenever using
+it fails, and a connection that drops at that moment counts as a failure. This is how
+ESP-IDF's Bluetooth stack is built, not a fault in the valve or in this integration. It
+happened once on this project's proxy, which heard the valve at -76 dBm; the valve then
+refused every connection until it was paired again. Restarting the proxy does not bring the
+pairing back.
 
-What helps:
+**What to do.** Put the valve in pairing mode and follow the request to pair again.
 
-- **A strong signal.** Put the proxy close to the valve. This makes a dropped link rare, on
-  any firmware.
-- **A firmware setting, from ESP-IDF 5.5.6** (ESPHome 2026.11 or later, which also works
-  around the 5.5.6 fault below). Running on this project's proxy since 2026-11-16 (ESPHome
-  2026.11.0b4, ESP-IDF 5.5.6): the pairing survives restarts and normal polling; a dropped
-  link has not happened on it yet, so the setting's actual purpose is still unobserved:
+**How to prevent it.** Use the [recommended proxy setup](#what-you-need): the setting
+`CONFIG_BT_BLE_SMP_REMOVE_BOND_ON_PAIR_FAIL_AS_CENTRAL: "n"` makes the proxy keep the pairing
+when a connection drops, and a strong signal makes dropped connections rare. The setting has
+run on this project's proxy since 2026-11-16 through restarts and normal use; a dropped
+connection has not happened on it yet. A local Bluetooth adapter on the Home Assistant host
+does not have this behaviour.
+
+ESPHome 2026.10 has a separate fault with the same symptom: it forgets every pairing after
+one connection, until the proxy restarts
+([esphome#21880](https://github.com/esphome/esphome/issues/21880)). ESPHome 2026.11 works
+around it. If Home Assistant asks to pair again within an hour of pairing, it says so.
+
+### Pairing fails although the valve is in pairing mode
+
+**Cause.** With the setting above, the proxy never discards a pairing by itself. If the
+valve forgets its side (a reset, or a replacement unit), the proxy keeps offering the old
+key, the valve keeps refusing it, and pairing again through that proxy fails every time.
+Rare, but it does not get better on its own.
+
+**What to do**, either of:
+
+- **Let the proxy discard a key the valve says it no longer has.** Add this next to the
+  first setting:
 
   ```yaml
-  esp32:
-    framework:
-      type: esp-idf
-      sdkconfig_options:
-        CONFIG_BT_BLE_SMP_REMOVE_BOND_ON_PAIR_FAIL_AS_CENTRAL: "n"
+  CONFIG_BT_BLE_SMP_UNBOND_ON_KEY_MISSING: "y"
   ```
 
-  With it the proxy keeps the pairing after a failed encryption. The other side of that: if
-  the valve itself forgets the pairing (a reset, a replacement), the proxy goes on offering
-  the old one, and this integration cannot yet make a proxy forget it.
-- **A local Bluetooth adapter** on the Home Assistant host, where one can hear the valve,
-  does not have this behaviour.
+  When the valve answers "I have no key", the proxy drops its copy and pairing works at
+  once; a connection that merely drops still keeps the pairing. The cost, in Espressif's own
+  words: a device in Bluetooth range that impersonates the valve could send the same answer,
+  make the proxy drop the pairing, and then pair with it at a weaker security level. That is
+  why it is off by default. Whether a reset Mira valve sends that answer has not been
+  tested.
+- **Clear the old key once.** Rebuild the proxy without
+  `CONFIG_BT_BLE_SMP_REMOVE_BOND_ON_PAIR_FAIL_AS_CENTRAL`, pair the valve (the first failed
+  attempt erases the valve's old key only, so pair again if the first try fails), then rebuild
+  with the setting back. Other devices paired with the proxy keep their pairings.
 
-When it happens, Home Assistant asks you to pair again; nothing else brings the valve back.
-
-### ESPHome 2026.10.x forgets pairings (ESP-IDF 5.5.6)
-
-A separate fault ([esphome#21880](https://github.com/esphome/esphome/issues/21880)): after
-the first connection the proxy forgets the pairing until it restarts. Pin the proxy to
-ESP-IDF 5.5.5 (`esp32: framework: type: esp-idf, version: 5.5.5`) or use ESPHome 2026.11 or
-later, which works around it.
+A local Bluetooth adapter does not need either: the pairing flow makes it forget the old key
+itself.
 
 ## Known limitations
 
@@ -383,15 +410,15 @@ later, which works around it.
 
 | Symptom | Likely cause and fix |
 | --- | --- |
-| *The valve refused to pair* | It was not in pairing mode, or the window had closed. Put it in pairing mode again and submit promptly. |
+| *The valve refused to pair* | It was not in pairing mode, or the window had closed: put it in pairing mode again and submit promptly. If it keeps failing through an ESPHome proxy while the valve is in pairing mode, the proxy may hold an old key: see [Known issues](#known-issues). |
 | *The link … could not be encrypted* | The proxy holds no pairing with the valve, or its pairing store is stuck. Restart the proxy; then pair with the valve in pairing mode. |
 | *Could not connect* during setup, or GATT errors 133 or 62 in the log | Something else may hold the valve's connections, usually the Mira app. Close it everywhere and try again. |
 | Pairing fails with *error 129* | That proxy cannot pair. Use a proxy that can, or a local adapter. |
 | *No Bluetooth adapter or proxy that can make connections* | The proxy is scan-only, lacks `active: true`, has no free connection slot, or is out of range. |
 | Entities unavailable after working | The Mira app is connected, the valve lost power, the proxy stopped scanning, or Home Assistant now reaches the valve through an adapter that holds no pairing. |
 | Repair: *has not answered for an hour* | Follow it in order: close the app, restart the proxy, check only one proxy can connect. It deliberately does not ask you to pair again. |
-| Repair: *the Bluetooth proxy is losing its pairing* | ESP-IDF 5.5.6 on the proxy. Pin 5.5.5 or update; pairing again will not help. |
-| A repair asks you to pair again | The valve refused the stored pairing three polls in a row through the adapter that holds it. Through an ESPHome proxy this is usually the proxy having lost the pairing: see [Known issues](#known-issues). Pair again. |
+| Repair: *the Bluetooth proxy is losing its pairing* | The proxy refused the pairing within an hour of pairing: ESPHome 2026.10 does that. Update the proxy to ESPHome 2026.11 or later, then pair again. |
+| A repair asks you to pair again | The valve refused the stored pairing three polls in a row through the adapter that holds it. Through an ESPHome proxy this is usually the proxy having lost the pairing. Pair again, and see [Known issues](#known-issues) to prevent it. |
 | An action fails with *did not follow* or *stopped as a precaution* | The valve accepted the frame but its state did not change in time. Download diagnostics and open an issue. |
 | A value looks wrong | Download diagnostics: they carry the raw state bytes and the last frames exchanged. |
 

@@ -7,10 +7,24 @@ release may change entities or behaviour.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-16
+
 ### Changed
 
 - The README presents the integration as Platinum-first: Activate and Mode valves are expected
   to work but untested, with pointers to the projects written on them and a call for testers.
+- A Mira Platinum was measured to accept two connections at once; the "one connection at a
+  time" advice is softened accordingly.
+- Known issues rewritten around what you see: Home Assistant asking to pair again, and pairing
+  failing although the valve is in pairing mode, with causes and options for each. The
+  recommended ESPHome proxy setup moves to "What you need".
+
+### Fixed
+
+- The repair raised when a proxy loses the pairing within an hour of pairing told you to pin
+  ESP-IDF 5.5.5 and that pairing again would not help. It now names both known causes and says
+  to pair again after fixing the proxy.
+- The pairing error mentions an old key held by a proxy after a valve reset.
 
 ## [0.1.0] - 2026-11-16
 
