@@ -26,7 +26,14 @@ ATTR_FLOW: Final = "flow"
 IDLE_INTERVAL: Final = 60
 """Seconds between polls while nothing runs; each is one short connection."""
 RUNNING_INTERVAL: Final = 5
-"""Seconds between polls while water runs; the link is held open for the run."""
+"""Seconds between polls while the valve is active; each is a connection of its own."""
+LINK_BUDGET: Final = 3.0
+"""Seconds a link may have been up and still be used for a new poll or command.
+
+Measured through an ESPHome proxy on a Mira Platinum: on a new link each request takes 0.1 to
+0.3 s; once the link has been up for a few seconds each takes 7 to 10 s and many time out, so
+a Stop queued behind a read took 20 to 50 s. A new connection costs 2 to 4 s and is then
+quick, so nothing is done on an old link: every poll and every command gets a young one."""
 REAUTH_INTERVAL: Final = 600
 """Seconds between polls while re-pairing is outstanding, so a recovery is still noticed."""
 RUNNING_RETRIES: Final = 6

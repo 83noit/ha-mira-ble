@@ -260,11 +260,13 @@ The integration polls: it does not receive pushes.
 
 - **Idle:** every 60 seconds, over one short connection that is dropped afterwards, so the
   Mira app can still connect in between.
-- **Water running:** the connection is kept open and read every 5 seconds, then dropped once
-  the valve is at rest. Runs started at the wall are noticed at the next idle poll, within a
-  minute.
-- **Commands** connect on demand (or reuse the open connection) and are confirmed before
-  they return.
+- **Water running, or the valve paused:** every 5 seconds, again over a connection of its
+  own each time. Runs started at the wall are noticed at the next idle poll, within a minute.
+- **Commands** connect on demand and are confirmed before they return. Expect a few seconds
+  between pressing Stop and the water stopping: most of it is the connection.
+- **The connection is never held open.** Measured through an ESPHome proxy, a link that has
+  been up for a few seconds answers in 7 to 10 seconds where a new one answers in a third of
+  a second, so a held link made Stop slow exactly when it mattered.
 - **A missed reading** is tolerated: entities keep their last value for up to two failed
   polls and go unavailable on the third. *Stop*, the numbers and the preset buttons are
   always available. If a reading is missed while water runs, polling stays at 5 seconds for
@@ -305,7 +307,8 @@ slow valve shows up as a reconnect, not a wrong reading.
   follow the address. The valve then shows up as a new discovery saying it is already set
   up; pairing it once moves the existing entry, with its entities and history, to the new
   address.
-- A proxy with few connection slots can be full: a running valve holds one.
+- A proxy with few connection slots can be full when the valve is polled; the valve uses a
+  slot for a few seconds at a time, every 5 seconds while it is active.
 
 ## Troubleshooting
 

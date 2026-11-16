@@ -1,9 +1,11 @@
-"""Polling coordinator: one short connection per poll when idle, a held link while water runs.
+"""Polling coordinator: one short connection per poll and per command, never a held link.
 
-The valve accepts one Bluetooth connection at a time, shared with the vendor app. Holding it
-permanently would lock the app out, and connecting for every reading of a running shower
-would be slow, so the link follows the water: it is opened for a poll or a command, kept
-while the valve is active (polled every few seconds), and dropped once the valve is at rest.
+The valve accepts one Bluetooth connection at a time, shared with the vendor app, so the link
+is never kept between exchanges. It is not kept during a run either. That was tried: through
+an ESPHome proxy a link that had been up for a few seconds answered in 7 to 10 s where a new
+one answers in 0.3 s, reads timed out, and a Stop queued behind them took 20 to 50 s. A new
+connection costs 2 to 4 s and is then quick, so every poll and every command gets one (a
+command waiting on a poll takes that poll's link over while it is young).
 
 Rules the commands follow, each from a failure found in review:
 
@@ -75,6 +77,7 @@ from .const import (
     FALLBACK_MIN_TEMPERATURE,
     FALLBACK_TEMPERATURE,
     IDLE_INTERVAL,
+    LINK_BUDGET,
     MANUFACTURER,
     MAX_OPTIONAL_BACKOFF,
     MAX_PAIRING_REFUSALS,
@@ -202,6 +205,7 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
         self._failing_since: datetime | None = None
         self._was_active = False
         self._failures_while_active = 0
+        self._commands_waiting = 0
         self._through: tuple[int, float] | None = None
         """A preset to start again once its warm-up ends in a hold, and until when."""
         self._outlets_read_at: datetime | None = None
@@ -303,7 +307,16 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
         )
 
     async def _async_connected_valve(self) -> MiraValve:
-        """Return a client on an open link, connecting if there is none."""
+        """Return a client on a link young enough to answer promptly, connecting if needed.
+
+        A link that has been up for more than :data:`LINK_BUDGET` is dropped and made
+        again: see that constant.
+        """
+        transport = self._transport
+        if transport is not None and transport.is_connected:
+            age = transport.link_age
+            if age is None or age > LINK_BUDGET:
+                await self._async_release(keep=False)
         if self._transport is None or not self._transport.is_connected:
             device = bluetooth.async_ble_device_from_address(
                 self.hass, self.address, connectable=True
@@ -329,7 +342,7 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
         return MiraValve(self._transport, max_temperature=ABSOLUTE_MAX_TEMPERATURE)
 
     async def _async_release(self, *, keep: bool) -> None:
-        """Record the link's traffic and drop it unless the valve is active."""
+        """Record the link's traffic and drop it, unless a command is waiting to use it."""
         transport = self._transport
         if transport is None:
             return
@@ -371,14 +384,12 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
                 translation_placeholders={"name": self.name},
             )
         self.poll_count += 1
-        keep = False
         async with self._lock:
             try:
                 async with asyncio.timeout(POLL_TIMEOUT):
                     valve = await self._async_connected_valve()
                     state = await valve.read_state()
                     state = await self._async_continue_preset(valve, state)
-                    keep = state.active
                     last_usage = self.data.last_usage if self.data else None
                     if not state.active:
                         last_usage = await self._async_idle_reads(valve, last_usage)
@@ -401,7 +412,9 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
                     translation_placeholders={"name": self.name, "error": self.last_error or ""},
                 ) from err
             finally:
-                await self._async_release(keep=keep)
+                # A command that queued behind this poll takes the link over while it is
+                # still young, rather than paying for a connection of its own.
+                await self._async_release(keep=self._commands_waiting > 0)
         self._note_success(state)
         return ValveData(state=state, last_usage=last_usage)
 
@@ -615,7 +628,9 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
         attempt = _Attempt()
         done = False
         self._through = None  # any command ends the wait to continue a preset
+        self._commands_waiting += 1
         async with self._lock:
+            self._commands_waiting -= 1
             try:
                 async with asyncio.timeout(COMMAND_TIMEOUT):
                     try:
@@ -629,7 +644,7 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
                 raise await self._async_failed(err, attempt) from err
             finally:
                 state = attempt.state
-                await self._async_release(keep=state is not None and state.active)
+                await self._async_release(keep=self._commands_waiting > 0)
                 if not done and attempt.written:
                     self._after_uncertain_command(state)
         assert attempt.state is not None

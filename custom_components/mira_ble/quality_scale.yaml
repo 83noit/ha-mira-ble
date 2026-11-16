@@ -15,8 +15,8 @@ rules:
       60 s over one short connection while idle; 5 s on a held link while the valve is active,
       kept for six polls after a failure during a run; 600 s while re-pairing is outstanding.
   brands:
-    status: todo
-    comment: No brand/ images yet (Mira and Kohler marks are third-party trademarks).
+    status: done
+    comment: Shipped through the local brand/ folder (HA >= 2026.3) rather than home-assistant/brands. The Mira Showers mark is Kohler Mira's trademark, used to identify the device.
   common-modules: done
   config-flow: done
   config-flow-test-coverage: done

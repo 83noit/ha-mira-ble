@@ -51,7 +51,7 @@ async def test_a_start_sends_exactly_what_the_numbers_show(
     assert hass.states.get(HAND).state == "on"
     assert hass.states.get(OVERHEAD).state == "off"
     assert hass.states.get(RUNNING).state == "on"
-    assert valve.is_connected  # the link is held while water runs
+    assert not valve.is_connected  # nothing is held: the next poll makes its own link
 
 
 async def test_a_start_does_not_inherit_what_the_last_person_used_at_the_wall(
@@ -250,7 +250,7 @@ async def test_the_start_action_refuses_values_the_outlet_does_not_allow_before_
 # --- stopping ---------------------------------------------------------------------------------
 
 
-async def test_closing_the_last_outlet_pauses_and_releases_the_link_once_at_rest(
+async def test_closing_the_last_outlet_pauses_and_releases_the_link(
     hass: HomeAssistant, setup_entry: MockConfigEntry, valve: FakeValve
 ) -> None:
     """The stop is the app's pause: water off, the valve's settings kept, held for a while."""
@@ -261,10 +261,6 @@ async def test_closing_the_last_outlet_pauses_and_releases_the_link_once_at_rest
     assert not valve.running
     assert _commands(valve)[-1] == started[:8] + b"\x40" + _commands(valve)[-1][9:]
     assert hass.states.get(RUNNING).state == "off"
-    assert valve.is_connected  # held: the wall button can start it again at any moment
-    valve.rest()
-    await setup_entry.runtime_data.async_refresh()
-    await hass.async_block_till_done()
     assert not valve.is_connected
 
 
@@ -294,6 +290,7 @@ async def test_stop_is_retried_on_a_fresh_connection(
 ) -> None:
     await _call(hass, "switch", "turn_on", HAND)
     connects = valve.connects
+    valve.pause_rejected = True  # so the all-zero stop is what has to work
     refusals = iter([True, False])
     original = FakeValve._set_outlets
 
@@ -306,7 +303,7 @@ async def test_stop_is_retried_on_a_fresh_connection(
         await _call(hass, "button", "press", STOP)
     assert valve.outlets == 0
     assert hass.states.get(RUNNING).state == "off"
-    assert valve.connects == connects  # the link was still up for the retry
+    assert valve.connects == connects + 2  # the stop, and its retry on a link of its own
 
 
 async def test_stopping_a_valve_that_stays_held_is_a_confirmed_stop(
@@ -334,7 +331,7 @@ async def test_a_preset_with_no_outlet_bit_shows_as_running_and_can_be_stopped(
     assert hass.states.get(RUNNING).state == "on"
     assert hass.states.get(HAND).state == "off"  # no outlet bit is reported
     assert float(hass.states.get("sensor.bathroom_flow").state) > 0
-    assert valve.is_connected  # still being watched closely
+    assert not valve.is_connected  # watched closely, on a new link each time
     assert setup_entry.runtime_data.update_interval == timedelta(seconds=RUNNING_INTERVAL)
     await _call(hass, "button", "press", STOP)
     assert not valve.active
@@ -449,7 +446,6 @@ async def test_a_start_that_took_effect_late_is_noticed_at_once(
     await setup_entry.runtime_data.async_refresh()
     assert hass.states.get(HAND).state == "on"
     assert hass.states.get(RUNNING).state == "on"
-    assert valve.is_connected
 
 
 async def test_an_outlet_change_that_fails_shows_what_the_valve_reports_and_does_not_stop_it(
@@ -465,7 +461,6 @@ async def test_an_outlet_change_that_fails_shows_what_the_valve_reports_and_does
     assert STOP_FRAME not in _commands(valve)
     assert hass.states.get(HAND).state == "on"
     assert hass.states.get(OVERHEAD).state == "off"
-    assert valve.is_connected  # water is running: the link is kept
 
 
 async def test_a_rejected_command_is_an_error(

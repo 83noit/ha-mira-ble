@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Iterator
 import contextlib
 from datetime import timedelta
@@ -21,6 +22,7 @@ from custom_components.mira_ble.const import (
     DOMAIN,
     FAILURES_BEFORE_UNAVAILABLE,
     IDLE_INTERVAL,
+    LINK_BUDGET,
     MAX_PAIRING_REFUSALS,
     OUTAGE_ISSUE_AFTER,
     OUTLET_REFRESH,
@@ -66,7 +68,7 @@ async def test_an_idle_valve_is_polled_slowly_over_short_connections(
     assert hass.states.get("sensor.bathroom_last_run_temperature").state == "44.0"
 
 
-async def test_a_running_valve_is_polled_fast_on_one_held_link(
+async def test_a_running_valve_is_polled_fast_on_a_new_link_each_time(
     hass: HomeAssistant, setup_entry: MockConfigEntry, valve: FakeValve
 ) -> None:
     await hass.services.async_call("switch", "turn_on", {"entity_id": HAND}, blocking=True)
@@ -74,7 +76,8 @@ async def test_a_running_valve_is_polled_fast_on_one_held_link(
     connects = valve.connects
     valve.water_temperature = 37.9
     await _tick(hass, RUNNING_INTERVAL + 1)
-    assert valve.connects == connects  # the same link
+    assert valve.connects == connects + 1  # a link of its own: a held one goes slow
+    assert not valve.is_connected
     assert hass.states.get(WATER).state == "37.9"
     valve.outlets = 0  # stopped at the wall
     await _tick(hass, RUNNING_INTERVAL + 1)
@@ -91,7 +94,6 @@ async def test_a_run_started_at_the_wall_is_followed_without_changing_the_stored
     assert hass.states.get("switch.bathroom_overhead_shower").state == "on"
     assert hass.states.get("number.bathroom_target_temperature").state == "40.0"
     assert hass.states.get("number.bathroom_target_flow").state == "10.0"
-    assert valve.is_connected
     assert _interval(setup_entry) == RUNNING_INTERVAL
     valve.outlets = 0
     await _tick(hass, RUNNING_INTERVAL + 1)
@@ -109,7 +111,6 @@ async def test_a_held_valve_with_the_water_off_is_watched_but_not_running(
     await _tick(hass, IDLE_INTERVAL + 1)
     assert hass.states.get(RUNNING).state == "off"
     assert hass.states.get("sensor.bathroom_flow").state == "0.0"
-    assert valve.is_connected  # the outlet button at the wall can start it at any moment
     assert _interval(setup_entry) == RUNNING_INTERVAL
     valve.rest()
     await _tick(hass, RUNNING_INTERVAL + 1)
@@ -125,8 +126,45 @@ async def test_water_flowing_with_no_outlet_bit_is_followed_as_running(
     await _tick(hass, IDLE_INTERVAL + 1)
     assert hass.states.get(RUNNING).state == "on"
     assert hass.states.get("sensor.bathroom_flow").state == "12.0"
-    assert valve.is_connected
     assert _interval(setup_entry) == RUNNING_INTERVAL
+
+
+async def test_a_link_that_has_been_up_too_long_is_not_used_again(
+    hass: HomeAssistant, setup_entry: MockConfigEntry, valve: FakeValve
+) -> None:
+    """Measured through a proxy: a held link answers in 7 to 10 s, a new one in 0.3 s."""
+    coordinator = setup_entry.runtime_data
+    old = await coordinator._async_connected_valve()  # as if something had left a link up
+    assert valve.is_connected
+    connects = valve.connects
+    valve.link_age = LINK_BUDGET + 1
+    await coordinator.async_refresh()
+    assert valve.connects == connects + 1
+    assert old.transport is valve
+    assert not valve.is_connected
+
+
+async def test_a_command_waiting_on_a_poll_takes_over_its_young_link(
+    hass: HomeAssistant, setup_entry: MockConfigEntry, valve: FakeValve
+) -> None:
+    """A Stop pressed during a poll must not pay for a second connection."""
+    coordinator = setup_entry.runtime_data
+    valve.outlets, valve.target_tenths, valve.flow_byte = 1, 380, 32
+    original = FakeValve.state_payload
+    stops: list[asyncio.Task[None]] = []
+
+    def read_and_press_stop(self: FakeValve) -> bytes:
+        if not stops:  # during the poll's read, someone presses Stop
+            stops.append(hass.async_create_task(coordinator.async_stop()))
+        return original(self)
+
+    connects = valve.connects
+    with patch.object(FakeValve, "state_payload", read_and_press_stop):
+        await coordinator.async_refresh()
+        await asyncio.gather(*stops)
+    assert valve.connects == connects + 1  # one link served the poll and the stop
+    assert not valve.running
+    assert not valve.is_connected
 
 
 # --- failures ---------------------------------------------------------------------------------

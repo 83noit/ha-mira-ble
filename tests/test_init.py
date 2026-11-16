@@ -91,7 +91,6 @@ async def test_unload_closes_the_link(
     await hass.services.async_call(
         "switch", "turn_on", {"entity_id": "switch.bathroom_hand_shower"}, blocking=True
     )
-    assert valve.is_connected  # held while water runs
     assert await hass.config_entries.async_unload(setup_entry.entry_id)
     assert setup_entry.state is ConfigEntryState.NOT_LOADED
     assert not valve.is_connected
