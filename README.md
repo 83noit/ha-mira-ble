@@ -332,7 +332,9 @@ What helps:
 - **A strong signal.** Put the proxy close to the valve. This makes a dropped link rare, on
   any firmware.
 - **A firmware setting, from ESP-IDF 5.5.6** (ESPHome 2026.11 or later, which also works
-  around the 5.5.6 fault below). Not yet tried by this project:
+  around the 5.5.6 fault below). Running on this project's proxy since 2026-11-16 (ESPHome
+  2026.11.0b4, ESP-IDF 5.5.6): the pairing survives restarts and normal polling; a dropped
+  link has not happened on it yet, so the setting's actual purpose is still unobserved:
 
   ```yaml
   esp32:
