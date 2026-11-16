@@ -33,15 +33,14 @@ trademarks.
 | Mira Activate, current Mira Mode | **Should work, not tried yet.** The code is tested against replies that other projects recorded from these valves |
 | Older Mira Mode (service `bccb0001-…`) | Not supported: it speaks a different language |
 
-**Got an Activate or a Mode?** For now, the safe bet is the project built on your valve:
-[Mira-Activate-HA](https://github.com/jonwilliams84/Mira-Activate-HA) for the Activate, and
-[ha-mira-mode](https://github.com/HaydenGriffin/ha-mira-mode) (or the
-[mira-mode-control](https://github.com/ryan-shaw/mira-mode-control) library) for the Mode.
-
-**Happy to try this one instead?** That would help a lot. Please
-[open an issue](https://github.com/83noit/ha-mira-ble/issues) first. Start with pairing and
-the readings (no water), stay near the shower, and attach the diagnostics download: it holds
-the raw messages, which is what's needed to check the details for your valve.
+**Got an Activate or a Mode?** This integration should work on it, but nobody has tried yet,
+so you'd be the first. If you'd like to help, please
+[open an issue](https://github.com/83noit/ha-mira-ble/issues) before you start: begin with
+pairing and the readings (no water), stay near the shower, and attach the diagnostics
+download. If you'd rather have something already in daily use on your valve,
+[Mira-Activate-HA](https://github.com/jonwilliams84/Mira-Activate-HA) (Activate) and
+[ha-mira-mode](https://github.com/HaydenGriffin/ha-mira-mode) (Mode) are built specifically
+for them.
 
 ## What you need
 
