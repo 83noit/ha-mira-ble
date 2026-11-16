@@ -21,7 +21,7 @@
       },
       "reauth_confirm": {
         "title": "Pair with {name} again",
-        "description": "The valve refused the stored pairing. The existing pairing is tried once more first, so nothing is lost if it still works.\n\nPut the valve in pairing mode (see your manual), then select **Submit** within about 30 seconds.\n\nIn range and able to connect: {connectable}"
+        "description": "The valve refused the stored pairing. Through an ESPHome Bluetooth proxy this usually means the proxy has lost the pairing, not that anything is wrong with the valve (see Known issues in the documentation).\n\nPut the valve in pairing mode (see your manual), then select **Submit** within about 30 seconds. The existing pairing is tried once more first, so nothing is lost if it still works.\n\nIn range and able to connect: {connectable}"
       },
       "reconfigure": {
         "title": "Pair with {name} again",

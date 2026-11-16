@@ -10,7 +10,7 @@ Built on [mira-ble](https://github.com/83noit/mira-ble), whose
 [acknowledgements](https://github.com/83noit/mira-ble#acknowledgements) credit the projects it
 draws on.
 
-> **Status: beta, run on one real valve.** It has run in one Home Assistant against one Mira
+> **Status: early, run on one real valve.** It has run in one Home Assistant against one Mira
 > Platinum, through an ESPHome Bluetooth proxy: pairing, polling, presets, outlets and stop.
 > Everything else (other models, a local Bluetooth adapter) has only run against a simulated
 > valve. See [What has been verified](#what-has-been-verified).
@@ -33,11 +33,9 @@ their owners.
   used. The pairing lives on the adapter that made it, and Home Assistant chooses the adapter
   for each connection by signal, so if two can connect near the valve only one of them will
   work: make the others scan-only.
-- **Not ESPHome 2026.10.x on that proxy, unless pinned.** It builds on ESP-IDF 5.5.6, which
-  forgets a pairing after the first connection
-  ([esphome#21880](https://github.com/esphome/esphome/issues/21880)). Pin the proxy to
-  ESP-IDF 5.5.5 (`esp32: framework: type: esp-idf, version: 5.5.5`) or use a release with the
-  fix. The integration recognises the pattern and says so instead of asking you to pair again.
+- **On an ESPHome proxy, mind the firmware and the signal.** A proxy can lose the pairing
+  without the valve being at fault; see [Known issues](#known-issues) before you choose
+  where to put it and which ESPHome version to run.
 
 ## Install
 
@@ -261,8 +259,10 @@ The integration polls: it does not receive pushes.
 
 - **Idle:** every 60 seconds, over one short connection that is dropped afterwards, so the
   Mira app can still connect in between.
-- **Water running, or the valve paused:** every 5 seconds, again over a connection of its
-  own each time. Runs started at the wall are noticed at the next idle poll, within a minute.
+- **Water running:** every 5 seconds, again over a connection of its own each time. Runs
+  started at the wall are noticed at the next idle poll, within a minute.
+- **Paused** (the two minutes a Mira Platinum holds after a warm-up or a stop): every 30
+  seconds. Every poll is a connection, and connections are kept to what is needed.
 - **Commands** connect on demand and are confirmed before they return. Expect a few seconds
   between pressing Stop and the water stopping: most of it is the connection.
 - **The connection is never held open.** Measured through an ESPHome proxy, a link that has
@@ -288,20 +288,64 @@ slow valve shows up as a reconnect, not a wrong reading.
 | "Run preset 0" as a stop | Measured on an earlier Platinum, before this library existed |
 | The library on a Mira Platinum: pairing, reads, preset start, outlet command, pause and all-zero stop | Run by hand from macOS on one unit |
 | Outlet count, outlet type, error code | Read from the vendor app's code only |
-| This integration on a Mira Platinum through an ESPHome proxy (AtomS3, ESPHome 2026.9.1, ESP-IDF 5.5.5) | Run in one Home Assistant: pairing, the bond surviving proxy and Home Assistant restarts, idle polling, presets in both steps, outlet on and off, stop. Stop is acknowledged in about 2.4 s. A whole shower followed at the 5-second polling rate has not been watched yet |
+| This integration on a Mira Platinum through an ESPHome proxy (AtomS3, ESPHome 2026.9.1, ESP-IDF 5.5.5) | Run in one Home Assistant: pairing, the bond surviving proxy and Home Assistant restarts, idle polling, presets in both steps, outlet on and off, stop. A real shower was followed poll by poll. Stop on a running valve and `mira_ble.run_preset` were run on an earlier build with a different connection strategy and, on this one, only with the valve at rest (Stop acknowledged in about 2.4 s). The proxy lost the pairing once: see Known issues |
 | Starting outlets directly on a Mira Platinum | Works on one unit, through the library. The vendor app does not do this: it controls the Platinum through the cloud |
 | Local BlueZ adapter | **Not yet run** (the pairing code is shared with an integration that is) |
 | Activate and Mode valves | **Not yet run** with this integration; the protocol layer is tested against their recordings |
+
+## Known issues
+
+### An ESPHome proxy can lose the pairing
+
+Seen once, during a real shower, on an ESPHome proxy (ESP32-S3, ESP-IDF 5.5.5) that heard the
+valve at -76 dBm: one connection dropped while it was being encrypted, and from then on the
+valve refused every connection until it was paired again in pairing mode. Restarting the
+proxy did not help.
+
+The cause is in the proxy's Bluetooth stack, not in the valve or this integration. ESP-IDF
+erases a stored pairing from flash whenever an encryption attempt fails, and a link that
+drops at that moment counts as a failure. Every connection is a small chance of it, and this
+integration connects once a minute when idle and every few seconds while water runs (see
+[How data is updated](#how-data-is-updated) for why it does not hold the connection).
+
+What helps:
+
+- **A strong signal.** Put the proxy close to the valve. This makes a dropped link rare, on
+  any firmware.
+- **A firmware setting, from ESP-IDF 5.5.6** (ESPHome 2026.11 or later, which also works
+  around the 5.5.6 fault below). Not yet tried by this project:
+
+  ```yaml
+  esp32:
+    framework:
+      type: esp-idf
+      sdkconfig_options:
+        CONFIG_BT_BLE_SMP_REMOVE_BOND_ON_PAIR_FAIL_AS_CENTRAL: "n"
+  ```
+
+  With it the proxy keeps the pairing after a failed encryption. The other side of that: if
+  the valve itself forgets the pairing (a reset, a replacement), the proxy goes on offering
+  the old one, and this integration cannot yet make a proxy forget it.
+- **A local Bluetooth adapter** on the Home Assistant host, where one can hear the valve,
+  does not have this behaviour.
+
+When it happens, Home Assistant asks you to pair again; nothing else brings the valve back.
+
+### ESPHome 2026.10.x forgets pairings (ESP-IDF 5.5.6)
+
+A separate fault ([esphome#21880](https://github.com/esphome/esphome/issues/21880)): after
+the first connection the proxy forgets the pairing until it restarts. Pin the proxy to
+ESP-IDF 5.5.5 (`esp32: framework: type: esp-idf, version: 5.5.5`) or use ESPHome 2026.11 or
+later, which works around it.
 
 ## Known limitations
 
 - The valve accepts one Bluetooth connection at a time. While water runs under Home
   Assistant's watch the Mira app cannot connect, and while the app is connected the
   integration's polls fail.
-- Whether holding the connection during a run interferes with a wireless wall controller is
-  not known. Another project holds its connection permanently on an Activate without
-  reporting a problem. If your controller misbehaves while Home Assistant watches a run,
-  please open an issue.
+- Whether the integration's connections interfere with a wireless wall controller is not
+  known; none was seen on a Mira Platinum. If your controller misbehaves while Home
+  Assistant watches a run, please open an issue.
 - Runs started at the wall can take up to a minute to appear.
 - Presets cannot be created or edited from Home Assistant, and after changing them in the
   Mira app you need *Reconfigure* for the buttons to follow.
@@ -324,7 +368,7 @@ slow valve shows up as a reconnect, not a wrong reading.
 | Entities unavailable after working | The Mira app is connected, the valve lost power, the proxy stopped scanning, or Home Assistant now reaches the valve through an adapter that holds no pairing. |
 | Repair: *has not answered for an hour* | Follow it in order: close the app, restart the proxy, check only one proxy can connect. It deliberately does not ask you to pair again. |
 | Repair: *the Bluetooth proxy is losing its pairing* | ESP-IDF 5.5.6 on the proxy. Pin 5.5.5 or update; pairing again will not help. |
-| A repair asks you to pair again | The valve refused the stored pairing three polls in a row through the adapter that holds it. Follow the repair. |
+| A repair asks you to pair again | The valve refused the stored pairing three polls in a row through the adapter that holds it. Through an ESPHome proxy this is usually the proxy having lost the pairing: see [Known issues](#known-issues). Pair again. |
 | An action fails with *did not follow* or *stopped as a precaution* | The valve accepted the frame but its state did not change in time. Download diagnostics and open an issue. |
 | A value looks wrong | Download diagnostics: they carry the raw state bytes and the last frames exchanged. |
 

@@ -26,7 +26,11 @@ ATTR_FLOW: Final = "flow"
 IDLE_INTERVAL: Final = 60
 """Seconds between polls while nothing runs; each is one short connection."""
 RUNNING_INTERVAL: Final = 5
-"""Seconds between polls while the valve is active; each is a connection of its own."""
+"""Seconds between polls while water runs; each is a connection of its own."""
+PAUSED_INTERVAL: Final = 30
+"""Seconds between polls while the valve is held with the water off (two minutes after a
+warm-up or a stop on a Mira Platinum). Fewer connections than the running rate: nothing
+changes then unless someone presses a button at the wall."""
 LINK_BUDGET: Final = 3.0
 """Seconds a link may have been up and still be used for a new poll or command.
 

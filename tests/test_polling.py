@@ -26,6 +26,7 @@ from custom_components.mira_ble.const import (
     MAX_PAIRING_REFUSALS,
     OUTAGE_ISSUE_AFTER,
     OUTLET_REFRESH,
+    PAUSED_INTERVAL,
     REAUTH_INTERVAL,
     RUNNING_INTERVAL,
     RUNNING_RETRIES,
@@ -102,7 +103,7 @@ async def test_a_run_started_at_the_wall_is_followed_without_changing_the_stored
     assert hass.states.get("number.bathroom_target_flow").state == "12.0"
 
 
-async def test_a_held_valve_with_the_water_off_is_watched_but_not_running(
+async def test_a_paused_valve_is_polled_at_a_middle_rate_and_is_not_running(
     hass: HomeAssistant, setup_entry: MockConfigEntry, valve: FakeValve
 ) -> None:
     """Measured on a Platinum: warm-up done or just stopped, held for two minutes."""
@@ -111,9 +112,11 @@ async def test_a_held_valve_with_the_water_off_is_watched_but_not_running(
     await _tick(hass, IDLE_INTERVAL + 1)
     assert hass.states.get(RUNNING).state == "off"
     assert hass.states.get("sensor.bathroom_flow").state == "0.0"
-    assert _interval(setup_entry) == RUNNING_INTERVAL
+    assert hass.states.get("sensor.bathroom_phase").state == "paused"
+    # Every poll is a connection: a paused valve is not worth one every five seconds.
+    assert _interval(setup_entry) == PAUSED_INTERVAL
     valve.rest()
-    await _tick(hass, RUNNING_INTERVAL + 1)
+    await _tick(hass, PAUSED_INTERVAL + 1)
     assert _interval(setup_entry) == IDLE_INTERVAL
 
 

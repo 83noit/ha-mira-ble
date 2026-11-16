@@ -104,7 +104,8 @@ async def test_run_preset_is_not_cancelled_by_the_water_draining_after_the_warm_
     for _ in range(10):
         await _poll(hass)
         seen.append((_state(hass, PHASE), valve.held and valve.flowing, len(_presets_sent(valve))))
-    assert ("running", True, 1) in seen  # polled while draining, and nothing was sent then
+    # Polled while the last water drained: shown as paused, and nothing was sent then.
+    assert ("paused", True, 1) in seen
     assert _state(hass, PHASE) == "preset"
     assert _presets_sent(valve) == [B1, B1]
 

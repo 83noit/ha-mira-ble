@@ -1246,7 +1246,7 @@ dev = [
     { name = "bluetooth-data-tools" },
     { name = "dbus-fast" },
     { name = "habluetooth" },
-    { name = "mira-ble", specifier = "==0.1.0" },
+    { name = "mira-ble", specifier = "==0.1.1" },
     { name = "mypy", specifier = ">=1.19" },
     { name = "pytest-cov", specifier = ">=7" },
     { name = "pytest-homeassistant", extras = ["bluetooth"], specifier = ">=2026.11.1" },
@@ -1735,15 +1735,15 @@ wheels = [
 
 [[package]]
 name = "mira-ble"
-version = "0.1.0"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ble-bond" },
     { name = "bleak" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a8/a0/a9662b1ddad25ba555e584a2b7f0183a4f47d248b101abc86547c66a27bc/mira_ble-0.1.0.tar.gz", hash = "sha256:ae7f0d57d0324d810f62e8972a73104c50bd321753a322f9a5585e086a99ceb4", size = 65643, upload-time = "2026-11-16T11:48:18.603Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fa/bb/cf457cd1015b243dc17780256505124b71328f0ce0cb8452e9672e4afe80/mira_ble-0.1.1.tar.gz", hash = "sha256:b51ec968318e3d1bf753d6da020bfd4a36d83b0f61c00fc8fd55c05df5b9c255", size = 66107, upload-time = "2026-11-16T12:28:23.631Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e4/10/c03afe5b6e3e9a0daaf9d23170c6dee0324d952190dca31f7515a793eed2/mira_ble-0.1.0-py3-none-any.whl", hash = "sha256:d053cc4616de4084f3eff2ba3edf54c431c1aae68f6be34a77691ad4b24c1a38", size = 45907, upload-time = "2026-11-16T11:48:17.271Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/64/5dd2a0cea7d34884853bc7f6a902abe3951570d7a60823819263cfbfabf6/mira_ble-0.1.1-py3-none-any.whl", hash = "sha256:0f8d2ac763260d0c8a4ce20d01fde00e6aa1fc64fce351b99e5f041586004915", size = 46290, upload-time = "2026-11-16T12:28:22.251Z" },
 ]
 
 [[package]]

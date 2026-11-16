@@ -7,6 +7,24 @@ release may change entities or behaviour.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-16
+
+First release. Run in one Home Assistant against one Mira Platinum through an ESPHome proxy.
+Read the README's Known issues first: an ESPHome proxy can lose the pairing.
+
+### Changed
+
+- A valve that is only paused is polled every 30 s rather than every 5 s: every poll is a
+  connection, and a connection that dropped while it was being set up cost an ESPHome proxy
+  its record of the pairing during a real shower.
+- The request to pair again points to the README's new Known issues section: an ESPHome
+  proxy can lose the pairing when a connection drops while it is being encrypted.
+
+### Fixed
+
+- Phase no longer shows Running for the moment the last water drains at the end of a warm-up
+  (mira-ble 0.1.1).
+
 ## [0.1.0b1] - 2026-11-16
 
 First beta. Run in one Home Assistant against one Mira Platinum through an ESPHome proxy;

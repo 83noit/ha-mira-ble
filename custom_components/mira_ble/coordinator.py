@@ -83,6 +83,7 @@ from .const import (
     MAX_PAIRING_REFUSALS,
     OUTAGE_ISSUE_AFTER,
     OUTLET_REFRESH,
+    PAUSED_INTERVAL,
     POLL_TIMEOUT,
     REAUTH_INTERVAL,
     RUNNING_INTERVAL,
@@ -558,7 +559,7 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
         self.pairing_refusals = 0
         self._failing_since = None
         self._failures_while_active = 0
-        self._was_active = state.active
+        self._was_active = self._watch_closely(state)
         self.reauth_raised = False
         self._clear_issues()
         # A flow left over from before a reload is closed too: pairing again now would only
@@ -568,9 +569,24 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
             match_context={"source": SOURCE_REAUTH, "entry_id": self.config_entry.entry_id},
         ):
             self.hass.config_entries.flow.async_abort(flow["flow_id"])
-        self.update_interval = timedelta(
-            seconds=RUNNING_INTERVAL if state.active else IDLE_INTERVAL
-        )
+        self.update_interval = timedelta(seconds=self._interval_for(state))
+
+    def _watch_closely(self, state: State) -> bool:
+        """Return True while water runs or a preset waits to be carried past its warm-up."""
+        return state.running or self._through is not None
+
+    def _interval_for(self, state: State) -> int:
+        """Seconds to the next poll: every poll is a connection, so no more than are needed.
+
+        Each connection is a small risk on a proxy (one that dropped while it was being set
+        up cost an ESPHome proxy its record of the pairing), so the fast rate is kept for
+        when it earns its keep: water running, or a preset about to be continued. A valve
+        that is only paused changes when someone presses a button at the wall, and that can
+        wait a little longer.
+        """
+        if self._watch_closely(state):
+            return RUNNING_INTERVAL
+        return PAUSED_INTERVAL if state.active else IDLE_INTERVAL
 
     async def _async_continue_preset(self, valve: MiraValve, state: State) -> State:
         """Start the preset proper once a preset run with "run preset" has warmed up.
