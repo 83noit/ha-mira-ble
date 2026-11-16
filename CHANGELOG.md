@@ -7,6 +7,11 @@ release may change entities or behaviour.
 
 ## [Unreleased]
 
+### Changed
+
+- The README presents the integration as Platinum-first: Activate and Mode valves are expected
+  to work but untested, with pointers to the projects written on them and a call for testers.
+
 ## [0.1.0] - 2026-11-16
 
 First release. Run in one Home Assistant against one Mira Platinum through an ESPHome proxy.

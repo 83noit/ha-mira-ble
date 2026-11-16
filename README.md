@@ -1,8 +1,9 @@
 # Mira Bluetooth for Home Assistant
 
-Controls and monitors **Mira digital showers** (Platinum, Activate and current-generation Mode
-valves) over Bluetooth LE, through a local Bluetooth adapter or an ESPHome Bluetooth proxy.
-No cloud, no account. Outlets, temperature, flow and the valve's stored presets become Home
+Controls and monitors the **Mira Platinum** digital shower over Bluetooth LE, through a local
+Bluetooth adapter or an ESPHome Bluetooth proxy. Mira Activate and current-generation Mira
+Mode valves speak the same protocol and are expected to work, but nobody has run this
+integration on one yet: see [Which valves](#which-valves). No cloud, no account. Outlets, temperature, flow and the valve's stored presets become Home
 Assistant entities, with the water temperature, flow, the last run and a water total as
 sensors.
 
@@ -20,6 +21,24 @@ draws on.
 
 This project is not affiliated with Mira Showers or Kohler. Mira and Kohler are trademarks of
 their owners.
+
+## Which valves
+
+| Valve | Status |
+| --- | --- |
+| Mira Platinum | Built for it and run on one, through an ESPHome proxy |
+| Mira Activate, current Mira Mode | **Expected to work, untested.** Their protocol layer here is tested only against replies recorded from those valves by the projects below |
+| Older Mira Mode (service `bccb0001-…`) | Not supported: a different protocol |
+
+**If you have an Activate or a Mode**, the field-proven choice today is the project written
+on your valve: [Mira-Activate-HA](https://github.com/jonwilliams84/Mira-Activate-HA) for the
+Activate, and [ha-mira-mode](https://github.com/HaydenGriffin/ha-mira-mode) (or the
+[mira-mode-control](https://github.com/ryan-shaw/mira-mode-control) library) for the Mode.
+
+**Testers wanted.** If you are willing to try this integration on an Activate or a Mode,
+please [open an issue](https://github.com/83noit/ha-mira-ble/issues) first. Start with pairing
+and the read-only entities, attended, and attach the diagnostics download: it carries the raw
+frames, which is what is needed to confirm or correct the layouts for your valve.
 
 ## What you need
 
@@ -291,7 +310,7 @@ slow valve shows up as a reconnect, not a wrong reading.
 | This integration on a Mira Platinum through an ESPHome proxy (AtomS3, ESPHome 2026.9.1, ESP-IDF 5.5.5) | Run in one Home Assistant: pairing, the bond surviving proxy and Home Assistant restarts, idle polling, presets in both steps, outlet on and off, stop. A real shower was followed poll by poll. Stop on a running valve and `mira_ble.run_preset` were run on an earlier build with a different connection strategy and, on this one, only with the valve at rest (Stop acknowledged in about 2.4 s). The proxy lost the pairing once: see Known issues |
 | Starting outlets directly on a Mira Platinum | Works on one unit, through the library. The vendor app does not do this: it controls the Platinum through the cloud |
 | Local BlueZ adapter | **Not yet run** (the pairing code is shared with an integration that is) |
-| Activate and Mode valves | **Not yet run** with this integration; the protocol layer is tested against their recordings |
+| Activate and Mode valves | **Not yet run** with this integration; the protocol layer is tested against their recordings. See [Which valves](#which-valves) |
 
 ## Known issues
 
