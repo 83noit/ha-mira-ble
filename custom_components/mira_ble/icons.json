@@ -42,6 +42,18 @@
       },
       "outlet_max_duration": {
         "default": "mdi:timer-lock-outline"
+      },
+      "phase": {
+        "default": "mdi:state-machine"
+      },
+      "time_remaining": {
+        "default": "mdi:timer-sand"
+      },
+      "run_volume": {
+        "default": "mdi:water-outline"
+      },
+      "running_preset": {
+        "default": "mdi:playlist-play"
       }
     },
     "switch": {
@@ -62,6 +74,9 @@
   "services": {
     "start": {
       "service": "mdi:shower-head"
+    },
+    "run_preset": {
+      "service": "mdi:play-circle"
     }
   }
 }

@@ -44,6 +44,7 @@ from homeassistant.util import dt as dt_util
 from mira_ble import (
     ABSOLUTE_MAX_TEMPERATURE,
     BleTransport,
+    CommandRejected,
     LastUsage,
     MiraError,
     MiraValve,
@@ -84,6 +85,7 @@ from .const import (
     RUNNING_INTERVAL,
     RUNNING_RETRIES,
     STOP_ATTEMPTS,
+    THROUGH_TIMEOUT,
     UNVERIFIED_PRESET_SLOTS,
 )
 
@@ -200,6 +202,8 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
         self._failing_since: datetime | None = None
         self._was_active = False
         self._failures_while_active = 0
+        self._through: tuple[int, float] | None = None
+        """A preset to start again once its warm-up ends in a hold, and until when."""
         self._outlets_read_at: datetime | None = None
         self._transport: BleTransport | None = None
         self._lock = asyncio.Lock()
@@ -373,6 +377,7 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
                 async with asyncio.timeout(POLL_TIMEOUT):
                     valve = await self._async_connected_valve()
                     state = await valve.read_state()
+                    state = await self._async_continue_preset(valve, state)
                     keep = state.active
                     last_usage = self.data.last_usage if self.data else None
                     if not state.active:
@@ -554,6 +559,39 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
             seconds=RUNNING_INTERVAL if state.active else IDLE_INTERVAL
         )
 
+    async def _async_continue_preset(self, valve: MiraValve, state: State) -> State:
+        """Start the preset proper once a preset run with "run preset" has warmed up.
+
+        Measured on a Mira Platinum: the first preset command warms the water up and the
+        valve holds; the same command during the hold runs the preset with its timer.
+        Anything else the valve does meanwhile (rest, a run with no warm-up, a preset
+        already counting down) ends the wait, and so does any other command.
+        """
+        if self._through is None:
+            return state
+        slot, deadline = self._through
+        if state.held and not state.running:  # held, and the water has stopped
+            try:
+                started = await valve.run_preset(slot, before=state)
+            except (NotConfirmed, CommandRejected) as err:
+                self._through = None
+                _LOGGER.warning(
+                    "%s: preset %d did not start after its warm-up: %s", self.name, slot, err
+                )
+                return await valve.read_state()
+            self._through = None
+            assert started is not None
+            return started
+        if (
+            not state.active
+            # An open outlet with no warm-up flag: a preset running at once, or a plain run.
+            # Not merely "running": the water drains for a moment as a warm-up ends.
+            or (bool(state.outlets) and not state.warming_up)
+            or self.hass.loop.time() > deadline
+        ):
+            self._through = None
+        return state
+
     # -- commands ----------------------------------------------------------------------------
 
     def _publish(self, state: State) -> None:
@@ -576,6 +614,7 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
             )
         attempt = _Attempt()
         done = False
+        self._through = None  # any command ends the wait to continue a preset
         async with self._lock:
             try:
                 async with asyncio.timeout(COMMAND_TIMEOUT):
@@ -775,8 +814,12 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
             else:
                 return
 
-    async def async_run_preset(self, slot: int) -> None:
-        """Start a stored preset, after checking it is still the preset the button names."""
+    async def async_run_preset(self, slot: int, *, through: bool = False) -> None:
+        """Start a stored preset, after checking it is still the preset the button names.
+
+        With ``through``, a preset that warms up and holds is started again at the hold by
+        the next poll, so it runs with its timer and nobody has to press anything.
+        """
 
         async def action(valve: MiraValve, current: State, attempt: _Attempt) -> State:
             if self.presets_verifiable:
@@ -788,6 +831,8 @@ class MiraCoordinator(DataUpdateCoordinator[ValveData]):
             return state
 
         await self._async_command(action)
+        if through and self.data.state.warming_up:
+            self._through = (slot, self.hass.loop.time() + THROUGH_TIMEOUT)
 
     async def _async_verify_preset(self, valve: MiraValve, slot: int) -> None:
         """Refuse a preset that is gone, renamed, or hotter than its outlets allow.

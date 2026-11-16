@@ -7,7 +7,8 @@ release may change entities or behaviour.
 
 ## [Unreleased]
 
-Nothing here has yet run on a real valve.
+The library underneath has run by hand on one Mira Platinum; this integration has not yet
+run against a real valve.
 
 ### Added
 
@@ -16,6 +17,11 @@ Nothing here has yet run on a real valve.
   buttons, running and fault binary sensors, water temperature, flow, last-run, water-total
   and per-outlet limit sensors.
 - `mira_ble.start` action: open an outlet at a temperature and flow for that start only.
+- Phase, running preset, preset time remaining and water-used-this-run sensors, from the
+  valve's own state.
+- `mira_ble.run_preset` action: start a preset and carry it past its warm-up, for valves
+  that warm a preset up and then wait (measured on a Mira Platinum). A press of a preset
+  button sends the preset command once, as the wall controller's start button does.
 - One short connection per poll while idle; a held link while the valve is active.
 - Commands confirmed by reading the valve back; temperatures capped at each outlet's own
   maximum; presets checked before they run; an unconfirmed start is stopped.

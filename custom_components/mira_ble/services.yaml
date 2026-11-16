@@ -22,3 +22,8 @@ start:
           max: 25
           step: 0.5
           unit_of_measurement: "L/min"
+run_preset:
+  target:
+    entity:
+      integration: mira_ble
+      domain: button

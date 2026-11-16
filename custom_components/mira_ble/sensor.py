@@ -22,7 +22,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from mira_ble import LastUsage
+from mira_ble import LastUsage, Phase
 
 from .coordinator import MiraConfigEntry, MiraCoordinator, OutletInfo, ValveData
 from .entity import MiraEntity
@@ -34,7 +34,7 @@ PARALLEL_UPDATES = 0
 class MiraSensorDescription(SensorEntityDescription):
     """A sensor read from one poll's data; None means the valve has not reported it."""
 
-    value_fn: Callable[[ValveData], float | int | None]
+    value_fn: Callable[[ValveData], float | int | str | None]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -62,6 +62,34 @@ SENSORS: tuple[MiraSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfVolumeFlowRate.LITERS_PER_MINUTE,
         suggested_display_precision=1,
         value_fn=lambda data: data.state.flow,
+    ),
+    MiraSensorDescription(
+        key="phase",
+        translation_key="phase",
+        device_class=SensorDeviceClass.ENUM,
+        options=[phase.value for phase in Phase],
+        value_fn=lambda data: data.state.phase.value,
+    ),
+    MiraSensorDescription(
+        key="time_remaining",
+        translation_key="time_remaining",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        suggested_unit_of_measurement=UnitOfTime.MINUTES,
+        suggested_display_precision=1,
+        # The valve counts a running preset down; nothing else has a timer.
+        value_fn=lambda data: (
+            data.state.time_remaining if data.state.phase is Phase.PRESET else None
+        ),
+    ),
+    MiraSensorDescription(
+        key="run_volume",
+        translation_key="run_volume",
+        device_class=SensorDeviceClass.VOLUME,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfVolume.LITERS,
+        # Litres since the valve last left rest; it clears when the valve rests again.
+        value_fn=lambda data: data.state.volume,
     ),
     MiraSensorDescription(
         key="last_run_duration",
@@ -125,6 +153,7 @@ async def async_setup_entry(
     coordinator = entry.runtime_data
     entities: list[SensorEntity] = [MiraSensor(coordinator, description) for description in SENSORS]
     entities.append(MiraWaterTotalSensor(coordinator))
+    entities.append(MiraRunningPresetSensor(coordinator))
     entities.extend(
         MiraOutletSensor(coordinator, number, description)
         for number in coordinator.outlets
@@ -144,9 +173,27 @@ class MiraSensor(MiraEntity, SensorEntity):
         self.entity_description = description
 
     @property
-    def native_value(self) -> float | int | None:
+    def native_value(self) -> float | int | str | None:
         """Return the reading; unknown when the valve has not reported it."""
         return self.entity_description.value_fn(self.coordinator.data)
+
+
+class MiraRunningPresetSensor(MiraEntity, SensorEntity):
+    """The name of the preset the valve says is running, when it says so."""
+
+    _attr_translation_key = "running_preset"
+
+    def __init__(self, coordinator: MiraCoordinator) -> None:
+        """Bind the sensor."""
+        super().__init__(coordinator, "running_preset")
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the preset's name, or its slot when the name was never read."""
+        state = self.coordinator.data.state
+        if state.phase is not Phase.PRESET:
+            return None
+        return self.coordinator.presets.get(state.preset) or str(state.preset)
 
 
 class MiraOutletSensor(MiraEntity, SensorEntity):

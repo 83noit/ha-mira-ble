@@ -113,6 +113,8 @@ async def async_get_config_entry_diagnostics(
             "raw": data.state.raw.hex(" "),
             "outlets": int(data.state.outlets),
             "active": data.state.active,
+            "running": data.state.running,
+            "phase": data.state.phase.value,
         },
         "last_usage": asdict(data.last_usage) if data.last_usage else None,
         "last_frames": [

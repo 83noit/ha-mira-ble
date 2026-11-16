@@ -81,10 +81,13 @@ running it by mistake does no harm.
 | One per outlet: *Hand shower*, *Overhead shower* or *Bath filler* when the valve says what the outlet feeds and no two are alike, otherwise *Outlet 1*, *Outlet 2* | Switch | On while the valve reports that outlet open. Turning the last one off stops the valve. |
 | Target temperature, Target flow | Number | What the next start **from Home Assistant** uses. Kept across restarts; never taken from the valve, so a start does not inherit what the last person used at the wall. While water runs under an outlet they show the valve's own values, and changing one applies at once. |
 | Stop | Button | Closes every outlet, including a running preset. Always available, retried up to three times. |
-| Start *preset name*, one per preset stored in the valve | Button | Checks the preset first (see Safety), then starts it. |
+| Start *preset name*, one per preset stored in the valve | Button | Checks the preset first (see Safety), then sends the preset command once, as the start button of the wall controller does. See *Presets* below. |
 | Running | Binary sensor | On while water runs: an outlet is open or flow is measured. A valve that is only holding (a Platinum pauses for two minutes after a warm-up or a stop) is off. |
 | Fault | Binary sensor (diagnostic) | On when the valve reports an error. |
 | Water temperature, Flow | Sensor | Measured at the valve. |
+| Phase | Sensor | *Idle*, *Warming up*, *Paused* (held with the water off: ready after a warm-up, or just stopped), *Running a preset* or *Running*. |
+| Running preset, Preset time remaining | Sensor | The preset the valve says is running, and the time it has left by the valve's own count. Unknown otherwise. |
+| Water used this run | Sensor | Litres since the valve last left rest, as the valve counts them. Measured on a Mira Platinum; other models may always report zero. |
 | Last run duration, volume, temperature | Sensor | The valve's own record of its last finished run. |
 | Water used | Sensor | Litres, counted from those records; usable in the Water dashboard. |
 | Outlet *n* maximum temperature, maximum run time | Sensor (diagnostic) | The valve's own limits, as set in the Mira app. |
@@ -93,6 +96,32 @@ running it by mistake does no harm.
 **Action `mira_ble.start`**, on an outlet switch, with optional `temperature` and `flow`:
 opens that outlet at values given for this start only. They are checked against the outlet's
 own limits before anything is sent, and are not remembered.
+
+**Action `mira_ble.run_preset`**, on a preset button: starts the preset and carries it past
+its warm-up without another press (see below).
+
+### Presets
+
+On a Mira Platinum (measured) a preset runs in two steps, over Bluetooth as at the wall:
+
+1. The preset command runs water until it is up to temperature (10 to 40 seconds), then the
+   valve shuts it off and waits. *Phase* shows *Warming up*, then *Paused*. If nothing
+   happens the valve goes back to rest by itself after two minutes.
+2. The same command again starts the preset proper. The valve counts the preset's duration
+   down (*Preset time remaining*), and *Phase* shows *Running a preset*.
+
+So:
+
+- **Pressing a Start button** warms the shower up and leaves it waiting for you. Press it
+  again, or use the outlet button at the wall, when you are there.
+- **`mira_ble.run_preset`** does both steps: it starts the preset again as soon as the
+  warm-up has ended (checked every five seconds, for up to five minutes). Water then runs for
+  the preset's whole duration. Stop, or any other command, cancels the second step.
+- **An outlet switch, or the wall's outlet button, during the pause** starts a plain run: no
+  preset number and no countdown, so only the outlet's maximum run time applies.
+- The wall controller shows its timer only for a preset started on the controller itself.
+
+A valve that runs a preset at once, with no warm-up, needs only the one command either way.
 
 If the valve does not answer when asked for its presets (one Platinum at rest was seen not to; another answered),
 the integration cannot list or check them. It then creates *Start preset 1* to *3*, disabled;
@@ -111,8 +140,9 @@ What the integration does:
   A preset is read before it runs and refused if it has been renamed, deleted, or set hotter
   than its outlets allow.
 - **Confirmation.** A command counts as done only when the valve acknowledged it and its
-  state shows it within a few seconds. "Stopped" means the valve reports itself fully at
-  rest, twice in a row; if the usual stop does not get there, a second kind of stop is tried.
+  state shows it within a few seconds. "Stopped" means no open outlet and no measured flow,
+  twice in a row. The stop is the vendor app's own (a pause that keeps the valve's settings);
+  if water still runs, two other kinds of stop are tried in turn.
 - **No stale commands.** The valve's state is read on the same connection before every
   command. Changing outlets on a running shower re-sends the temperature and flow the valve
   is running at, never a stored value.

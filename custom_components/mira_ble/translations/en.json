@@ -105,6 +105,25 @@
       },
       "outlet_max_duration": {
         "name": "Outlet {number} maximum run time"
+      },
+      "phase": {
+        "name": "Phase",
+        "state": {
+          "rest": "Idle",
+          "warming_up": "Warming up",
+          "paused": "Paused",
+          "preset": "Running a preset",
+          "running": "Running"
+        }
+      },
+      "time_remaining": {
+        "name": "Preset time remaining"
+      },
+      "run_volume": {
+        "name": "Water used this run"
+      },
+      "running_preset": {
+        "name": "Running preset"
       }
     },
     "switch": {
@@ -164,6 +183,9 @@
     },
     "start_unknown": {
       "message": "The start on {name} could not be confirmed ({error}) and neither could a stop. CHECK THE SHOWER: water may be running."
+    },
+    "not_a_preset": {
+      "message": "{entity} is not a preset button. Choose one of the Start buttons named after a preset."
     }
   },
   "issues": {
@@ -190,6 +212,10 @@
           "description": "Flow in litres per minute. Defaults to the Target flow entity."
         }
       }
+    },
+    "run_preset": {
+      "name": "Run preset",
+      "description": "Starts the preset of this button and carries it past its warm-up, so that it runs for its own duration with nobody at the shower. On a valve that warms a preset up and then waits (a Mira Platinum), pressing the button only warms up; this action also starts the preset once the water is warm. Water then runs until the preset's timer ends or the valve is stopped."
     }
   }
 }

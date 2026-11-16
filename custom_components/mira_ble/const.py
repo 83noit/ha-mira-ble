@@ -19,6 +19,7 @@ CONF_PAIRED_SOURCE: Final = "paired_source"
 CONF_PAIRED_AT: Final = "paired_at"
 
 SERVICE_START: Final = "start"
+SERVICE_RUN_PRESET: Final = "run_preset"
 ATTR_TEMPERATURE: Final = "temperature"
 ATTR_FLOW: Final = "flow"
 
@@ -45,6 +46,9 @@ and, for a start that could not be confirmed, a stop."""
 PAIR_TIMEOUT: Final = 120.0
 """Upper bound on the pairing step: connecting, pairing and up to a dozen reads, each of which
 has been reported to take several seconds on a slow link."""
+THROUGH_TIMEOUT: Final = 300.0
+"""Seconds a preset started with "run preset" may spend warming up before the integration
+stops waiting to start the preset proper."""
 STOP_ATTEMPTS: Final = 3
 """Times a stop is tried, each on a fresh connection, before it is reported as failed."""
 

@@ -11,7 +11,7 @@ from homeassistant.helpers import service
 from homeassistant.helpers.typing import ConfigType
 import probatio
 
-from .const import ATTR_FLOW, ATTR_TEMPERATURE, DOMAIN, SERVICE_START
+from .const import ATTR_FLOW, ATTR_TEMPERATURE, DOMAIN, SERVICE_RUN_PRESET, SERVICE_START
 from .coordinator import MiraConfigEntry, MiraCoordinator
 
 PLATFORMS: list[Platform] = [
@@ -26,7 +26,7 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Register the start action, which exists whether or not a valve is loaded."""
+    """Register the actions, which exist whether or not a valve is loaded."""
     service.async_register_platform_entity_service(
         hass,
         DOMAIN,
@@ -37,6 +37,14 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             probatio.Optional(ATTR_FLOW): probatio.Coerce(float),
         },
         func="async_start",
+    )
+    service.async_register_platform_entity_service(
+        hass,
+        DOMAIN,
+        SERVICE_RUN_PRESET,
+        entity_domain=Platform.BUTTON,
+        schema=None,
+        func="async_run_through",
     )
     return True
 
