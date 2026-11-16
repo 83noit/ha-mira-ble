@@ -1,5 +1,11 @@
 # Mira Bluetooth for Home Assistant
 
+[![CI](https://github.com/83noit/ha-mira-ble/actions/workflows/ci.yml/badge.svg)](https://github.com/83noit/ha-mira-ble/actions/workflows/ci.yml)
+[![HACS](https://github.com/83noit/ha-mira-ble/actions/workflows/hacs.yml/badge.svg)](https://github.com/83noit/ha-mira-ble/actions/workflows/hacs.yml)
+[![Hassfest](https://github.com/83noit/ha-mira-ble/actions/workflows/hassfest.yml/badge.svg)](https://github.com/83noit/ha-mira-ble/actions/workflows/hassfest.yml)
+[![Release](https://img.shields.io/github/v/release/83noit/ha-mira-ble?sort=semver)](https://github.com/83noit/ha-mira-ble/releases)
+[![License: MIT](https://img.shields.io/github/license/83noit/ha-mira-ble)](LICENSE)
+
 Control and watch a **Mira Platinum** digital shower from Home Assistant, over Bluetooth. No
 cloud, no account. It talks to the valve directly, through a Bluetooth adapter on your Home
 Assistant machine or an ESPHome Bluetooth proxy.
