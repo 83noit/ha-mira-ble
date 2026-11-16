@@ -13,7 +13,7 @@
       },
       "bluetooth_confirm": {
         "title": "Pair with {name}",
-        "description": "{moved}The valve only talks to devices it is paired with, and only accepts a new pairing while it is in pairing mode.\n\n1. Close the Mira app on every phone nearby: the valve accepts one connection at a time.\n2. Put the valve in pairing mode. On a controller with a button, press and hold it for five seconds until it flashes; on a dial controller use Menu > Settings > Connect. Your manual has the steps for your model. Switching the valve's power off and on also leaves it pairable for a short while.\n3. Select **Submit** within about 30 seconds.\n\nIf the adapter or proxy below is already paired with the valve, select **Submit** straight away.\n\nThe pairing is stored on the adapter or proxy that makes it, so use the one that will stay nearest the valve, and keep only that one able to connect there.\n\nIn range and able to connect: {connectable}"
+        "description": "{moved}The valve only talks to devices it is paired with, and only accepts a new pairing while it is in pairing mode.\n\n1. Close the Mira app on phones nearby (some valves accept only one connection at a time).\n2. Put the valve in pairing mode. On a controller with a button, press and hold it for five seconds until it flashes; on a dial controller use Menu > Settings > Connect. Your manual has the steps for your model. Switching the valve's power off and on also leaves it pairable for a short while.\n3. Select **Submit** within about 30 seconds.\n\nIf the adapter or proxy below is already paired with the valve, select **Submit** straight away.\n\nThe pairing is stored on the adapter or proxy that makes it, so use the one that will stay nearest the valve, and keep only that one able to connect there.\n\nIn range and able to connect: {connectable}"
       },
       "pair_failed": {
         "title": "Pairing with {name} failed",
@@ -191,7 +191,7 @@
   "issues": {
     "not_responding": {
       "title": "{name} has not answered for an hour",
-      "description": "Home Assistant can hear {name} but has not been able to read it for at least an hour. Pairing it again is rarely the fix. In this order:\n\n1. Close the Mira app on every phone nearby: the valve accepts one connection at a time.\n2. Restart the Bluetooth proxy nearest the valve. A proxy can keep accepting connections while its pairing store is stuck.\n3. Check that only one proxy able to connect is in range of the valve; the pairing lives on the one that made it.\n4. Only if none of that helps, use **Reconfigure** on the integration, with the valve in pairing mode.\n\nThis notice clears itself when the valve answers again."
+      "description": "Home Assistant can hear {name} but has not been able to read it for at least an hour. Pairing it again is rarely the fix. In this order:\n\n1. Close the Mira app on phones nearby (some valves accept only one connection at a time).\n2. Restart the Bluetooth proxy nearest the valve. A proxy can keep accepting connections while its pairing store is stuck.\n3. Check that only one proxy able to connect is in range of the valve; the pairing lives on the one that made it.\n4. Only if none of that helps, use **Reconfigure** on the integration, with the valve in pairing mode.\n\nThis notice clears itself when the valve answers again."
     },
     "proxy_forgets_bond": {
       "title": "The Bluetooth proxy near {name} is losing its pairing",

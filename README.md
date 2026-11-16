@@ -75,7 +75,8 @@ in pairing mode.
    also use *Add integration* → Mira Bluetooth and pick it from the list.
 2. The first screen lists the adapters and proxies that hear the valve and can connect. If
    there is none, fix that first.
-3. Close the Mira app on every phone nearby: the valve accepts one connection at a time.
+3. If pairing fails, close the Mira app on phones nearby and try again. A Mira Platinum was
+   measured to accept two connections at once; other models are reported to take only one.
 4. Put the valve in pairing mode. On a controller with a button, press and hold it for five
    seconds until it flashes; on a dial controller use Menu → Settings → Connect. Your manual
    has the steps for your model. Switching the valve's power off and on is reported to leave
@@ -361,9 +362,10 @@ later, which works around it.
 
 ## Known limitations
 
-- The valve accepts one Bluetooth connection at a time. While water runs under Home
-  Assistant's watch the Mira app cannot connect, and while the app is connected the
-  integration's polls fail.
+- How many connections a valve accepts at once varies. A Mira Platinum served two (a Mac and
+  Home Assistant through a proxy) for five minutes without either failing, and kept
+  advertising meanwhile; how many more it takes is not known. The Mira Mode is reported to take
+  only one, so there the Mira app and this integration can block each other.
 - Whether the integration's connections interfere with a wireless wall controller is not
   known; none was seen on a Mira Platinum. If your controller misbehaves while Home
   Assistant watches a run, please open an issue.
@@ -383,7 +385,7 @@ later, which works around it.
 | --- | --- |
 | *The valve refused to pair* | It was not in pairing mode, or the window had closed. Put it in pairing mode again and submit promptly. |
 | *The link … could not be encrypted* | The proxy holds no pairing with the valve, or its pairing store is stuck. Restart the proxy; then pair with the valve in pairing mode. |
-| *Could not connect* during setup, or GATT errors 133 or 62 in the log | Something else holds the valve's one connection, usually the Mira app. Close it everywhere. |
+| *Could not connect* during setup, or GATT errors 133 or 62 in the log | Something else may hold the valve's connections, usually the Mira app. Close it everywhere and try again. |
 | Pairing fails with *error 129* | That proxy cannot pair. Use a proxy that can, or a local adapter. |
 | *No Bluetooth adapter or proxy that can make connections* | The proxy is scan-only, lacks `active: true`, has no free connection slot, or is out of range. |
 | Entities unavailable after working | The Mira app is connected, the valve lost power, the proxy stopped scanning, or Home Assistant now reaches the valve through an adapter that holds no pairing. |
