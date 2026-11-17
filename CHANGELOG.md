@@ -7,6 +7,14 @@ release may change entities or behaviour.
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-17
+
+### Changed
+
+- The HACS check now runs in full. It used to skip the brand-image check, left over from
+  before the integration had its own icon; the icon is there, so nothing is skipped. No
+  change to the integration itself.
+
 ## [0.1.2] - 2026-11-16
 
 ### Changed
