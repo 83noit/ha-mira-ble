@@ -7,6 +7,12 @@ release may change entities or behaviour.
 
 ## [Unreleased]
 
+### Changed
+
+- The integration is now in the default HACS listing, so you can find it by searching for
+  "Mira Bluetooth" in the Marketplace instead of adding it by link. The README says so and
+  has a HACS Default badge.
+
 ## [0.1.3] - 2026-11-17
 
 ### Changed

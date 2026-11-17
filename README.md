@@ -5,6 +5,7 @@
 [![Hassfest](https://github.com/83noit/ha-mira-ble/actions/workflows/hassfest.yml/badge.svg)](https://github.com/83noit/ha-mira-ble/actions/workflows/hassfest.yml)
 [![Release](https://img.shields.io/github/v/release/83noit/ha-mira-ble?sort=semver)](https://github.com/83noit/ha-mira-ble/releases)
 [![License: MIT](https://img.shields.io/github/license/83noit/ha-mira-ble)](LICENSE)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/default)
 
 Control and watch a **Mira Platinum** digital shower from Home Assistant, over Bluetooth. No
 cloud, no account. It talks to the valve directly, through a Bluetooth adapter on your Home
@@ -80,8 +81,9 @@ for them.
 
 ## Install
 
-**Marketplace (Home Assistant 2026.11+):** Settings → Marketplace → *Add from link* →
-`https://github.com/83noit/ha-mira-ble` → install, then restart Home Assistant.
+**Marketplace (Home Assistant 2026.11+):** Settings → Marketplace → search for "Mira
+Bluetooth" → install. If the integration does not appear under *Add integration* afterwards,
+restart Home Assistant.
 
 **By hand:** copy `custom_components/mira_ble` into your `config/custom_components/` and
 restart Home Assistant.
